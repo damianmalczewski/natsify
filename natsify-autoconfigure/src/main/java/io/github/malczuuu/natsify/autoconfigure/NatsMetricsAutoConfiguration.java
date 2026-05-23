@@ -27,6 +27,7 @@ import io.github.malczuuu.natsify.instrument.micrometer.MicrometerNatsErrorObser
 import io.github.malczuuu.natsify.instrument.micrometer.MicrometerNatsListenerObserver;
 import io.github.malczuuu.natsify.instrument.micrometer.MicrometerNatsStatisticsObserver;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.nats.client.Connection;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -44,6 +45,7 @@ import org.springframework.core.annotation.Order;
  */
 @AutoConfiguration
 @ConditionalOnBooleanProperty(name = "natsify.enabled", matchIfMissing = true)
+@ConditionalOnClass(Connection.class)
 public final class NatsMetricsAutoConfiguration {
 
   @ConditionalOnClass(MeterRegistry.class)
