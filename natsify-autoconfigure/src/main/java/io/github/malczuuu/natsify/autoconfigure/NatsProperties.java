@@ -16,6 +16,8 @@
 
 package io.github.malczuuu.natsify.autoconfigure;
 
+import io.nats.client.Options;
+import java.time.Duration;
 import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
@@ -31,10 +33,23 @@ public class NatsProperties {
   private final String server;
 
   /** Username for NATS authentication. Omit if the server requires no credentials. */
-  private @Nullable final String username;
+  private final @Nullable String username;
 
   /** Password for NATS authentication. Omit if the server requires no credentials. */
-  private @Nullable final String password;
+  private final @Nullable String password;
+
+  /** Optional name for the NATS connection. Used as the thread name in the client. */
+  private final @Nullable String connectionName;
+
+  /**
+   * Maximum time to wait when establishing a connection. Uses the client default if {@code null}.
+   */
+  private final Duration connectionTimeout;
+
+  /**
+   * Maximum time to wait for a socket write to complete. Uses the client default if {@code null}.
+   */
+  private final Duration socketWriteTimeout;
 
   /**
    * Whether declared {@code StreamConfiguration} beans are used to create or update JetStream
@@ -50,6 +65,9 @@ public class NatsProperties {
    * @param server the NATS server URL
    * @param username optional username for authentication
    * @param password optional password for authentication
+   * @param connectionName optional name for the connection, used as thread name
+   * @param connectionTimeout optional maximum time to wait when establishing a connection
+   * @param socketWriteTimeout optional maximum time to wait for a socket write to complete
    * @param autoStreamCreation whether JetStream streams should be created or updated on startup
    */
   public NatsProperties(
@@ -57,11 +75,19 @@ public class NatsProperties {
       @DefaultValue("nats://localhost:4222") String server,
       @Nullable String username,
       @Nullable String password,
+      @Nullable String connectionName,
+      @Nullable Duration connectionTimeout,
+      @Nullable Duration socketWriteTimeout,
       @DefaultValue("false") boolean autoStreamCreation) {
     this.enabled = enabled;
     this.server = server;
     this.username = username;
     this.password = password;
+    this.connectionName = connectionName;
+    this.connectionTimeout =
+        connectionTimeout != null ? connectionTimeout : Options.DEFAULT_CONNECTION_TIMEOUT;
+    this.socketWriteTimeout =
+        socketWriteTimeout != null ? socketWriteTimeout : Options.DEFAULT_SOCKET_WRITE_TIMEOUT;
     this.autoStreamCreation = autoStreamCreation;
   }
 
@@ -99,6 +125,35 @@ public class NatsProperties {
    */
   public @Nullable String getPassword() {
     return password;
+  }
+
+  /**
+   * Returns the name of the connection, or {@code null} if not specified. Used in thread name.
+   *
+   * @return the name of the connection, or {@code null}
+   */
+  public @Nullable String getConnectionName() {
+    return connectionName;
+  }
+
+  /**
+   * Returns the maximum time to wait when establishing a connection, or {@code null} to use the
+   * client default.
+   *
+   * @return the connection timeout, or {@code null}
+   */
+  public Duration getConnectionTimeout() {
+    return connectionTimeout;
+  }
+
+  /**
+   * Returns the maximum time to wait for a socket write to complete, or {@code null} to use the
+   * client default.
+   *
+   * @return the socket write timeout, or {@code null}
+   */
+  public Duration getSocketWriteTimeout() {
+    return socketWriteTimeout;
   }
 
   /**

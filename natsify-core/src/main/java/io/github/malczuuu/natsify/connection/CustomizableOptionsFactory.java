@@ -35,7 +35,7 @@ public final class CustomizableOptionsFactory implements ConnectionOptionsFactor
    *
    * @param customizer the customizer to register
    */
-  public void register(ConnectionOptionsBuilderCustomizer customizer) {
+  public void registerBuilderCustomizer(ConnectionOptionsBuilderCustomizer customizer) {
     customizers.add(customizer);
   }
 

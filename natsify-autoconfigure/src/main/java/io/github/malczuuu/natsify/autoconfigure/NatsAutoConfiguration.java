@@ -50,6 +50,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Role;
+import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -67,26 +68,30 @@ public final class NatsAutoConfiguration {
   }
 
   @Bean
-  ConnectionOptionsBuilderCustomizer natsConnectionDetailsConnectionOptionsBuilderCustomizer(
-      NatsConnectionDetails natsConnectionDetails) {
-    return builder -> {
-      builder = builder.server(natsConnectionDetails.getServer());
-
-      if (StringUtils.hasLength(natsConnectionDetails.getUsername())) {
-        builder =
-            builder.userInfo(
-                natsConnectionDetails.getUsername(), natsConnectionDetails.getPassword());
-      }
-      return builder;
-    };
-  }
-
-  @Bean
   @ConditionalOnMissingBean(ConnectionOptionsFactory.class)
   CustomizableOptionsFactory customizableOptionsFactory(
-      List<ConnectionOptionsBuilderCustomizer> connectionOptionsBuilderCustomizers) {
+      Environment environment,
+      NatsProperties properties,
+      NatsConnectionDetails connectionDetails,
+      List<ConnectionOptionsBuilderCustomizer> customizers) {
     CustomizableOptionsFactory connectionOptionsFactory = new CustomizableOptionsFactory();
-    connectionOptionsBuilderCustomizers.forEach(connectionOptionsFactory::register);
+    connectionOptionsFactory.registerBuilderCustomizer(
+        it -> {
+          String connectionName = properties.getConnectionName();
+          if (connectionName == null) {
+            connectionName = environment.getProperty("spring.application.name");
+          }
+
+          if (StringUtils.hasLength(connectionDetails.getUsername())) {
+            it = it.userInfo(connectionDetails.getUsername(), connectionDetails.getPassword());
+          }
+
+          return it.server(connectionDetails.getServer())
+              .connectionName(connectionName)
+              .connectionTimeout(properties.getConnectionTimeout())
+              .socketWriteTimeout(properties.getSocketWriteTimeout());
+        });
+    customizers.forEach(connectionOptionsFactory::registerBuilderCustomizer);
     return connectionOptionsFactory;
   }
 

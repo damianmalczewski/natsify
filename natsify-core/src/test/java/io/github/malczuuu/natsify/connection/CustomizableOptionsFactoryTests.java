@@ -40,7 +40,8 @@ class CustomizableOptionsFactoryTests {
 
   @Test
   void givenSingleCustomizer_whenGetOptions_thenCustomizerApplied() {
-    connectionOptionsFactory.register(builder -> builder.connectionName("test-connection"));
+    connectionOptionsFactory.registerBuilderCustomizer(
+        builder -> builder.connectionName("test-connection"));
 
     Options options = connectionOptionsFactory.getOptions();
 
@@ -49,8 +50,10 @@ class CustomizableOptionsFactoryTests {
 
   @Test
   void givenMultipleCustomizers_whenGetOptions_thenAllCustomizersApplied() {
-    connectionOptionsFactory.register(builder -> builder.connectionName("test-connection"));
-    connectionOptionsFactory.register(builder -> builder.noRandomize().bufferSize(2048));
+    connectionOptionsFactory.registerBuilderCustomizer(
+        builder -> builder.connectionName("test-connection"));
+    connectionOptionsFactory.registerBuilderCustomizer(
+        builder -> builder.noRandomize().bufferSize(2048));
 
     Options options = connectionOptionsFactory.getOptions();
 
@@ -61,8 +64,8 @@ class CustomizableOptionsFactoryTests {
 
   @Test
   void givenMultipleCustomizers_whenGetOptions_thenAppliedInOrder() {
-    connectionOptionsFactory.register(builder -> builder.connectionName("first"));
-    connectionOptionsFactory.register(builder -> builder.connectionName("second"));
+    connectionOptionsFactory.registerBuilderCustomizer(builder -> builder.connectionName("first"));
+    connectionOptionsFactory.registerBuilderCustomizer(builder -> builder.connectionName("second"));
 
     Options options = connectionOptionsFactory.getOptions();
 
@@ -71,7 +74,7 @@ class CustomizableOptionsFactoryTests {
 
   @Test
   void givenCustomizerReturningNewBuilder_whenGetOptions_thenNewBuilderIsUsed() {
-    connectionOptionsFactory.register(
+    connectionOptionsFactory.registerBuilderCustomizer(
         ignored -> new Options.Builder().connectionName("from-new-builder"));
 
     Options options = connectionOptionsFactory.getOptions();
