@@ -57,8 +57,8 @@ tasks.withType<Jar>().configureEach {
         attributes["Implementation-Version"] = project.version
         attributes["Created-By"] = "Gradle ${gradle.gradleVersion}"
     }
-    from("${rootProject.rootDir}/LICENSE") {
+    from(arrayOf("${rootProject.rootDir}/LICENSE", "${rootProject.rootDir}/NOTICE")) {
         into("META-INF/")
-        rename { "LICENSE.txt" }
+        rename { "$it.txt" }
     }
 }
