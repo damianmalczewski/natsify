@@ -24,8 +24,6 @@ import io.github.malczuuu.natsify.core.NatsOperations;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import org.example.natsify.common.Record;
-import org.example.natsify.common.RecordStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,20 +40,20 @@ class NatsListenerExampleTests {
   @Container @ServiceConnection
   static final NatsContainer natsContainer = new NatsContainer("nats:2.14.0").withJetStream();
 
+  @Autowired NatsListenerExample application;
   @Autowired NatsOperations natsOperations;
   @Autowired RestTestClient restClient;
-  @Autowired RecordStore recordStore;
 
   @BeforeEach
   void beforeEach() {
-    recordStore.clear();
+    application.clear();
   }
 
   @Test
   void listenerReceivesMeasurementAndEndpointExposesIt() {
     natsOperations.publish(
         "telemetry.temperature",
-        new Record("sensor-single", 1700000000.0, "temperature", 23.5, "Cel"));
+        new SenmlRecord("sensor-single", 1700000000.0, "temperature", 23.5, "Cel"));
 
     await().atMost(Duration.ofSeconds(5)).until(() -> !measurementsFor("sensor-single").isEmpty());
 
@@ -65,10 +63,10 @@ class NatsListenerExampleTests {
         .exchange()
         .expectStatus()
         .isOk()
-        .expectBody(Record[].class)
+        .expectBody(SenmlRecord[].class)
         .value(
             all -> {
-              List<Record> received = measurementsFor("sensor-single", all);
+              List<SenmlRecord> received = measurementsFor("sensor-single", all);
               assertThat(received).hasSize(1);
               assertThat(received.getFirst().n()).isEqualTo("temperature");
               assertThat(received.getFirst().v()).isEqualTo(23.5);
@@ -79,9 +77,11 @@ class NatsListenerExampleTests {
   @Test
   void multipleSubjectsWithinStreamAreAllReceived() {
     natsOperations.publish(
-        "telemetry.humidity", new Record("sensor-multi", 1700000001.0, "humidity", 65.0, "%RH"));
+        "telemetry.humidity",
+        new SenmlRecord("sensor-multi", 1700000001.0, "humidity", 65.0, "%RH"));
     natsOperations.publish(
-        "telemetry.pressure", new Record("sensor-multi", 1700000002.0, "pressure", 1013.25, "hPa"));
+        "telemetry.pressure",
+        new SenmlRecord("sensor-multi", 1700000002.0, "pressure", 1013.25, "hPa"));
 
     await().atMost(Duration.ofSeconds(5)).until(() -> measurementsFor("sensor-multi").size() >= 2);
 
@@ -91,29 +91,29 @@ class NatsListenerExampleTests {
         .exchange()
         .expectStatus()
         .isOk()
-        .expectBody(Record[].class)
+        .expectBody(SenmlRecord[].class)
         .value(
             all -> {
-              List<Record> received = measurementsFor("sensor-multi", all);
+              List<SenmlRecord> received = measurementsFor("sensor-multi", all);
               assertThat(received).hasSize(2);
               assertThat(received.get(0).n()).isEqualTo("humidity");
               assertThat(received.get(1).n()).isEqualTo("pressure");
             });
   }
 
-  private List<Record> measurementsFor(String bn) {
-    Record[] all =
+  private List<SenmlRecord> measurementsFor(String bn) {
+    SenmlRecord[] all =
         restClient
             .get()
             .uri("/telemetry")
             .exchange()
-            .expectBody(Record[].class)
+            .expectBody(SenmlRecord[].class)
             .returnResult()
             .getResponseBody();
     return measurementsFor(bn, all);
   }
 
-  private static List<Record> measurementsFor(String bn, Record[] all) {
+  private static List<SenmlRecord> measurementsFor(String bn, SenmlRecord[] all) {
     if (all == null) return List.of();
     return Arrays.stream(all).filter(m -> bn.equals(m.bn())).toList();
   }

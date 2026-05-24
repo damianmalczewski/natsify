@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-@NullMarked
-package org.example.natsify.common;
+package org.example.natsify.listener;
 
-import org.jspecify.annotations.NullMarked;
+public record SenmlRecord(String bn, Double bt, String n, Double v, String u) {}
