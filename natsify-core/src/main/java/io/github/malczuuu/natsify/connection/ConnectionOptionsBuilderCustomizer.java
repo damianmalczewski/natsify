@@ -18,8 +18,18 @@ package io.github.malczuuu.natsify.connection;
 
 import io.nats.client.Options;
 
+/**
+ * Callback interface for customizing a NATS {@link Options.Builder} before the connection is
+ * established.
+ */
 @FunctionalInterface
 public interface ConnectionOptionsBuilderCustomizer {
 
+  /**
+   * Applies customizations to the given builder.
+   *
+   * @param builder the builder to customize
+   * @return the customized builder
+   */
   Options.Builder customize(Options.Builder builder);
 }

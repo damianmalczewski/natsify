@@ -16,16 +16,9 @@
 
 package io.github.malczuuu.natsify.connection;
 
-import io.github.malczuuu.natsify.handler.JetStreamListenerManager;
-import io.github.malczuuu.natsify.handler.JetStreamListenerRegistry;
-import io.github.malczuuu.natsify.handler.MessageArgumentResolver;
-import io.github.malczuuu.natsify.handler.NatsListenerManager;
-import io.github.malczuuu.natsify.handler.NatsListenerRegistry;
-import io.github.malczuuu.natsify.handler.SimpleMessageArgumentResolver;
-import io.github.malczuuu.natsify.instrument.JetStreamListenerObserver;
+import io.github.malczuuu.natsify.handler.ListenerManager;
 import io.github.malczuuu.natsify.instrument.NatsConnectionObserver;
 import io.github.malczuuu.natsify.instrument.NatsErrorObserver;
-import io.github.malczuuu.natsify.instrument.NatsListenerObserver;
 import io.nats.client.Connection;
 import io.nats.client.ConnectionListener;
 import io.nats.client.Consumer;
@@ -34,84 +27,105 @@ import io.nats.client.Message;
 import io.nats.client.Nats;
 import io.nats.client.Options;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.databind.json.JsonMapper;
+import org.springframework.aop.support.AopUtils;
 
-public class ConnectionConfigurer implements ConnectionManager, ConnectionListener, ErrorListener {
+/**
+ * {@link ConnectionManager} that establishes and manages a NATS {@link Connection} as a Spring
+ * lifecycle bean, and initializes annotation-based listeners on startup.
+ *
+ * <p>Also implements {@link ConnectionListener} and {@link ErrorListener} to forward connection
+ * events and errors to instrumentation observers.
+ */
+public final class ConnectionConfigurer
+    implements ConnectionManager, ConnectionListener, ErrorListener {
 
   private static final Logger log = LoggerFactory.getLogger(ConnectionConfigurer.class);
 
-  private final List<ConnectionOptionsBuilderCustomizer> connectionOptionsBuilderCustomizers;
-  private final NatsListenerManager natsListenerManager;
-  private final JetStreamListenerManager jetStreamListenerManager;
+  private final Options options;
+  private final List<? extends ListenerManager> listenerManagers;
   private final NatsConnectionObserver natsConnectionObserver;
   private final NatsErrorObserver natsErrorObserver;
 
-  private Options options = Options.builder().build();
-  private @Nullable Connection connection = null;
+  private volatile @Nullable Connection connection = null;
 
+  /**
+   * Creates a new {@link ConnectionConfigurer}.
+   *
+   * @param options NATS connection options
+   * @param listenerManagers managers responsible for setting up annotation-based listeners
+   * @param natsConnectionObserver observer for connection lifecycle events
+   * @param natsErrorObserver observer for errors and exceptions
+   */
   public ConnectionConfigurer(
-      List<ConnectionOptionsBuilderCustomizer> connectionOptionsBuilderCustomizers,
-      NatsListenerRegistry handlerRegistry,
-      JetStreamListenerRegistry jetStreamRegistry,
-      JsonMapper jsonMapper,
-      NatsListenerObserver natsListenerObserver,
-      JetStreamListenerObserver jetStreamListenerObserver,
+      Options options,
+      List<? extends ListenerManager> listenerManagers,
       NatsConnectionObserver natsConnectionObserver,
       NatsErrorObserver natsErrorObserver) {
-    this.connectionOptionsBuilderCustomizers = connectionOptionsBuilderCustomizers;
-    MessageArgumentResolver argumentResolver = new SimpleMessageArgumentResolver(jsonMapper);
-    this.natsListenerManager =
-        new NatsListenerManager(handlerRegistry, argumentResolver, natsListenerObserver);
-    this.jetStreamListenerManager =
-        new JetStreamListenerManager(
-            jetStreamRegistry, argumentResolver, jetStreamListenerObserver);
+    this.options = options;
+    this.listenerManagers = List.copyOf(listenerManagers);
     this.natsConnectionObserver = natsConnectionObserver;
     this.natsErrorObserver = natsErrorObserver;
   }
 
+  /**
+   * Returns the active NATS connection, establishing one if not yet connected.
+   *
+   * @return the active {@link Connection}
+   */
   @Override
   public Connection getConnection() {
-    Connection connection = this.connection;
     if (connection == null) {
-      throw new IllegalStateException("NATS connection not available");
+      synchronized (this) {
+        if (connection == null) {
+          try {
+            log.info("Establishing NATS connection at {}", options.getServers());
+            this.connection = Nats.connect(options);
+          } catch (Exception e) {
+            throw new RuntimeException("Failed to establish NATS connection", e);
+          }
+        }
+      }
     }
-    return connection;
+    return Objects.requireNonNull(connection);
   }
 
+  /** Establishes the NATS connection and initializes all registered listener managers. */
   @Override
   public synchronized void start() {
-    Options.Builder builder = Options.builder();
-    for (ConnectionOptionsBuilderCustomizer customizer : connectionOptionsBuilderCustomizers) {
-      builder = customizer.customize(builder);
-    }
-
-    builder = builder.connectionListener(this).errorListener(this);
-    options = builder.build();
-
-    log.info("Establishing NATS connection at {}", options.getServers());
+    Connection connection = getConnection();
     try {
-      Connection connection = Nats.connect(builder.build());
-      this.connection = connection;
-
-      natsListenerManager.initialize(connection);
-      jetStreamListenerManager.initialize(connection);
+      for (ListenerManager listenerManager : listenerManagers) {
+        log.info(
+            "Setting up annotation-based NATS listeners with {}",
+            AopUtils.getTargetClass(listenerManager).getSimpleName());
+        listenerManager.initialize(connection);
+      }
     } catch (Exception e) {
-      throw new RuntimeException("Failed to establish NATS connection", e);
+      throw new RuntimeException("Failed to set up annotation-based NATS listeners", e);
     }
   }
 
+  /** Stops all listener managers in reverse registration order and closes the NATS connection. */
   @Override
   public synchronized void stop() {
+    List<? extends ListenerManager> listenerManagers = new ArrayList<>(this.listenerManagers);
+    Collections.reverse(listenerManagers);
+    for (ListenerManager listenerManager : listenerManagers) {
+      log.info(
+          "Shutting down annotation-based NATS listeners with {}",
+          AopUtils.getTargetClass(listenerManager).getSimpleName());
+      listenerManager.stop();
+    }
+
     log.info("Closing NATS connection at {}", options.getServers());
-
-    jetStreamListenerManager.stop();
-    natsListenerManager.stop();
-
     try {
       Connection connection = this.connection;
       if (connection != null) {
@@ -119,10 +133,15 @@ public class ConnectionConfigurer implements ConnectionManager, ConnectionListen
       }
       this.connection = null;
     } catch (Exception e) {
-      throw new RuntimeException("Failed to drain NATS connection", e);
+      throw new RuntimeException("Failed to close NATS connection", e);
     }
   }
 
+  /**
+   * Returns {@code true} if the NATS connection has been established and not yet closed.
+   *
+   * @return {@code true} if connected
+   */
   @Override
   public boolean isRunning() {
     return connection != null;
@@ -141,18 +160,39 @@ public class ConnectionConfigurer implements ConnectionManager, ConnectionListen
   @Deprecated
   public void connectionEvent(Connection conn, Events type) {}
 
+  /**
+   * Handles a NATS connection event and forwards it to the connection observer.
+   *
+   * @param conn the connection that raised the event
+   * @param type the type of event
+   * @param time the time of the event in milliseconds
+   * @param uriDetails URI details of the connection
+   */
   @Override
   public void connectionEvent(Connection conn, Events type, Long time, String uriDetails) {
     log.info("Noticing NATS connection event; type={}", type);
     natsConnectionObserver.onConnectionEvent(type);
   }
 
+  /**
+   * Handles a protocol error reported by NATS and forwards it to the error observer.
+   *
+   * @param conn the connection on which the error occurred
+   * @param error the error description
+   */
   @Override
   public void errorOccurred(Connection conn, String error) {
     log.error("An error occurred in NATS; error={}", error);
     natsErrorObserver.onError(error);
   }
 
+  /**
+   * Handles an exception from the NATS dispatch thread and forwards it to the error observer. Noise
+   * exceptions during disconnect or reconnect are silently skipped.
+   *
+   * @param conn the connection on which the exception occurred
+   * @param exp the exception
+   */
   @Override
   public void exceptionOccurred(Connection conn, Exception exp) {
     // some exceptions are just noise (like getting EOF when listening on port while connection is
@@ -164,12 +204,24 @@ public class ConnectionConfigurer implements ConnectionManager, ConnectionListen
     natsErrorObserver.onException(exp);
   }
 
+  /**
+   * Handles a slow consumer detection event and forwards it to the error observer.
+   *
+   * @param conn the connection that detected the slow consumer
+   * @param consumer the slow consumer
+   */
   @Override
   public void slowConsumerDetected(Connection conn, Consumer consumer) {
     log.warn("Detected NATS slow consumer");
     natsErrorObserver.onSlowConsumerDetected();
   }
 
+  /**
+   * Handles a discarded message event and forwards it to the error observer.
+   *
+   * @param conn the connection that discarded the message
+   * @param msg the discarded message
+   */
   @Override
   public void messageDiscarded(Connection conn, Message msg) {
     log.warn(

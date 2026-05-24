@@ -18,4 +18,8 @@ package io.github.malczuuu.natsify.connection;
 
 import org.springframework.context.SmartLifecycle;
 
+/**
+ * Manages the lifecycle of JetStream stream provisioning, driven by Spring's {@link
+ * SmartLifecycle}.
+ */
 public interface JetStreamManager extends SmartLifecycle {}

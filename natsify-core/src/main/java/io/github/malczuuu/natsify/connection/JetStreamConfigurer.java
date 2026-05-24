@@ -25,50 +25,69 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JetStreamConfigurer implements JetStreamManager {
+/**
+ * {@link JetStreamManager} that auto-creates or updates JetStream streams on startup using the
+ * provided {@link StreamConfiguration} list.
+ */
+public final class JetStreamConfigurer implements JetStreamManager {
 
   private static final Logger log = LoggerFactory.getLogger(JetStreamConfigurer.class);
 
-  private final List<ConnectionOptionsBuilderCustomizer> connectionOptionsBuilderCustomizers;
+  private final boolean enabled;
+  private final Options options;
   private final List<StreamConfiguration> streamConfigurations;
 
   private boolean running = false;
 
+  /**
+   * Creates a new {@link JetStreamConfigurer}.
+   *
+   * @param enabled whether stream auto-creation is enabled
+   * @param options NATS connection options used for the management connection
+   * @param streamConfigurations stream configurations to create or update on startup
+   */
   public JetStreamConfigurer(
-      List<ConnectionOptionsBuilderCustomizer> connectionOptionsBuilderCustomizers,
-      List<StreamConfiguration> streamConfigurations) {
-    this.connectionOptionsBuilderCustomizers = connectionOptionsBuilderCustomizers;
+      boolean enabled, Options options, List<StreamConfiguration> streamConfigurations) {
+    this.enabled = enabled;
+    this.options = options;
     this.streamConfigurations = streamConfigurations;
   }
 
+  /**
+   * Returns the lifecycle phase for this manager. Runs near the end of the startup sequence to
+   * ensure streams are provisioned before listeners start.
+   *
+   * @return the phase value
+   */
   @Override
   public int getPhase() {
     return Integer.MAX_VALUE - 1;
   }
 
+  /**
+   * Creates or updates all configured JetStream streams using a short-lived management connection.
+   */
   @Override
   public void start() {
-    if (streamConfigurations.isEmpty()) {
-      log.info(
-          "No NATS listeners or JetStream listeners found, skipping JetStream stream configuration");
+    if (!enabled) {
+      log.info("Auto-creation of NATS JetStream streams is disabled, skipping");
       return;
     }
 
-    Options.Builder builder = Options.builder();
-    for (ConnectionOptionsBuilderCustomizer customizer : connectionOptionsBuilderCustomizers) {
-      builder = customizer.customize(builder);
+    if (streamConfigurations.isEmpty()) {
+      log.info("No NATS stream configurations found, skipping JetStream stream auto-creation");
+      return;
     }
-    Options options = builder.build();
 
     try (Connection conn = Nats.connect(options)) {
       JetStreamManagement management = conn.jetStreamManagement();
-      for (StreamConfiguration sc : streamConfigurations) {
+      for (StreamConfiguration stream : streamConfigurations) {
         try {
-          management.addStream(sc);
-          log.info("Created JetStream stream {}", sc.getName());
+          management.addStream(stream);
+          log.info("Created JetStream stream {}", stream.getName());
         } catch (Exception e) {
-          management.updateStream(sc);
-          log.info("Updated JetStream stream {}", sc.getName());
+          management.updateStream(stream);
+          log.info("Updated JetStream stream {}", stream.getName());
         }
       }
     } catch (Exception e) {
@@ -77,11 +96,17 @@ public class JetStreamConfigurer implements JetStreamManager {
     running = true;
   }
 
+  /** Marks this manager as stopped. */
   @Override
   public void stop() {
     running = false;
   }
 
+  /**
+   * Returns {@code true} if stream provisioning has completed.
+   *
+   * @return {@code true} if running
+   */
   @Override
   public boolean isRunning() {
     return running;

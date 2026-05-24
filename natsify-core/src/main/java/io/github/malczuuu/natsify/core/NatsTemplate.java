@@ -17,6 +17,7 @@
 package io.github.malczuuu.natsify.core;
 
 import io.github.malczuuu.natsify.connection.ConnectionManager;
+import io.github.malczuuu.natsify.connection.ConnectionSupplier;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
 import java.nio.charset.StandardCharsets;
@@ -25,17 +26,17 @@ import tools.jackson.databind.json.JsonMapper;
 /** Default {@link NatsOperations} implementation backed by a {@link ConnectionManager}. */
 public class NatsTemplate implements NatsOperations {
 
-  private final ConnectionManager connectionManager;
+  private final ConnectionSupplier connectionManager;
   private final JsonMapper jsonMapper;
 
   /**
    * Creates a new {@link NatsTemplate} with the given connection and JSON mapper.
    *
-   * @param connectionManager provides the active NATS connection
+   * @param connectionSupplier provides the active NATS connection
    * @param jsonMapper used for JSON serialization in {@link #publish(String, Object)}
    */
-  public NatsTemplate(ConnectionManager connectionManager, JsonMapper jsonMapper) {
-    this.connectionManager = connectionManager;
+  public NatsTemplate(ConnectionSupplier connectionSupplier, JsonMapper jsonMapper) {
+    this.connectionManager = connectionSupplier;
     this.jsonMapper = jsonMapper;
   }
 

@@ -19,15 +19,21 @@ package io.github.malczuuu.natsify.autoconfigure;
 import io.github.malczuuu.natsify.connection.ConnectionConfigurer;
 import io.github.malczuuu.natsify.connection.ConnectionManager;
 import io.github.malczuuu.natsify.connection.ConnectionOptionsBuilderCustomizer;
+import io.github.malczuuu.natsify.connection.ConnectionOptionsFactory;
+import io.github.malczuuu.natsify.connection.CustomizableOptionsFactory;
 import io.github.malczuuu.natsify.connection.JetStreamConfigurer;
 import io.github.malczuuu.natsify.connection.JetStreamManager;
 import io.github.malczuuu.natsify.core.NatsOperations;
 import io.github.malczuuu.natsify.core.NatsTemplate;
 import io.github.malczuuu.natsify.handler.JetStreamListenerAnnotationBeanPostProcessor;
+import io.github.malczuuu.natsify.handler.JetStreamListenerManager;
 import io.github.malczuuu.natsify.handler.JetStreamListenerRegistry;
+import io.github.malczuuu.natsify.handler.MessageArgumentResolver;
 import io.github.malczuuu.natsify.handler.NatsListenerAnnotationBeanPostProcessor;
+import io.github.malczuuu.natsify.handler.NatsListenerManager;
 import io.github.malczuuu.natsify.handler.NatsListenerRegistry;
 import io.github.malczuuu.natsify.handler.SimpleJetStreamListenerRegistry;
+import io.github.malczuuu.natsify.handler.SimpleMessageArgumentResolver;
 import io.github.malczuuu.natsify.handler.SimpleNatsListenerRegistry;
 import io.github.malczuuu.natsify.instrument.JetStreamListenerObserver;
 import io.github.malczuuu.natsify.instrument.NatsConnectionObserver;
@@ -35,7 +41,7 @@ import io.github.malczuuu.natsify.instrument.NatsErrorObserver;
 import io.github.malczuuu.natsify.instrument.NatsListenerObserver;
 import io.nats.client.Connection;
 import io.nats.client.api.StreamConfiguration;
-import org.springframework.beans.factory.ObjectProvider;
+import java.util.List;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
@@ -76,9 +82,18 @@ public final class NatsAutoConfiguration {
   }
 
   @Bean
+  @ConditionalOnMissingBean(ConnectionOptionsFactory.class)
+  CustomizableOptionsFactory customizableOptionsFactory(
+      List<ConnectionOptionsBuilderCustomizer> connectionOptionsBuilderCustomizers) {
+    CustomizableOptionsFactory connectionOptionsFactory = new CustomizableOptionsFactory();
+    connectionOptionsBuilderCustomizers.forEach(connectionOptionsFactory::register);
+    return connectionOptionsFactory;
+  }
+
+  @Bean
   @ConditionalOnMissingBean(ConnectionManager.class)
   ConnectionConfigurer natsConnectionConfigurer(
-      ObjectProvider<ConnectionOptionsBuilderCustomizer> connectionOptionsBuilderCustomizerProvider,
+      ConnectionOptionsFactory connectionOptionsFactory,
       NatsListenerRegistry natsListenerRegistry,
       JetStreamListenerRegistry jetStreamListenerRegistry,
       NatsListenerObserver natsListenerObserver,
@@ -86,13 +101,13 @@ public final class NatsAutoConfiguration {
       NatsConnectionObserver natsConnectionObserver,
       NatsErrorObserver natsErrorObserver,
       JsonMapper jsonMapper) {
+    MessageArgumentResolver argumentResolver = new SimpleMessageArgumentResolver(jsonMapper);
     return new ConnectionConfigurer(
-        connectionOptionsBuilderCustomizerProvider.orderedStream().toList(),
-        natsListenerRegistry,
-        jetStreamListenerRegistry,
-        jsonMapper,
-        natsListenerObserver,
-        jetStreamListenerObserver,
+        connectionOptionsFactory.getOptions(),
+        List.of(
+            new NatsListenerManager(natsListenerRegistry, argumentResolver, natsListenerObserver),
+            new JetStreamListenerManager(
+                jetStreamListenerRegistry, argumentResolver, jetStreamListenerObserver)),
         natsConnectionObserver,
         natsErrorObserver);
   }
@@ -105,13 +120,14 @@ public final class NatsAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean(JetStreamManager.class)
-  @ConditionalOnBooleanProperty(name = "natsify.auto-stream-creation")
   JetStreamConfigurer jetStreamConfigurer(
-      ObjectProvider<ConnectionOptionsBuilderCustomizer> connectionOptionsBuilderCustomizerProvider,
-      ObjectProvider<StreamConfiguration> streamConfigurationProvider) {
+      NatsProperties properties,
+      ConnectionOptionsFactory connectionOptionsFactory,
+      List<StreamConfiguration> streamConfigurations) {
     return new JetStreamConfigurer(
-        connectionOptionsBuilderCustomizerProvider.orderedStream().toList(),
-        streamConfigurationProvider.orderedStream().toList());
+        properties.isAutoStreamCreation(),
+        connectionOptionsFactory.getOptions(),
+        streamConfigurations);
   }
 
   @Bean

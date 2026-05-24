@@ -16,10 +16,15 @@
 
 package io.github.malczuuu.natsify.connection;
 
-import org.springframework.context.SmartLifecycle;
+import io.nats.client.Connection;
 
-/**
- * Manages the lifecycle of a NATS {@link io.nats.client.Connection}, combining {@link
- * ConnectionSupplier} with Spring's {@link SmartLifecycle} for context-driven startup and shutdown.
- */
-public interface ConnectionManager extends ConnectionSupplier, SmartLifecycle {}
+/** Provides access to the active NATS {@link Connection}. */
+public interface ConnectionSupplier {
+
+  /**
+   * Returns the active NATS connection, establishing one if not yet connected.
+   *
+   * @return the active {@link Connection}
+   */
+  Connection getConnection();
+}
