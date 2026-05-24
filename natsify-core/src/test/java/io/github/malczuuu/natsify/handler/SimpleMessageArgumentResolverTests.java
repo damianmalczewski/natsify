@@ -31,6 +31,7 @@ import java.lang.reflect.Parameter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.jspecify.annotations.NullUnmarked;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -145,6 +146,17 @@ class SimpleMessageArgumentResolverTests {
 
     assertThat(result).isInstanceOf(String[].class);
     assertThat((String[]) result).containsExactly("x", "y");
+  }
+
+  @NullUnmarked
+  @Test
+  void givenNatsHeadersAnnotation_whenResolvedWithoutHeaders_thenReturnsEmptyHeaders() {
+    Object result =
+        resolver.resolveArgument(
+            param("withNatsHeaders", Headers.class), messageWithHeaders(new byte[0], null));
+
+    assertThat(result).isInstanceOf(Headers.class);
+    assertThat(((Headers) result).size()).isEqualTo(0);
   }
 
   @NullUnmarked
@@ -264,7 +276,7 @@ class SimpleMessageArgumentResolverTests {
     return NatsMessage.builder().subject("test").data(data).build();
   }
 
-  private static Message messageWithHeaders(byte[] data, Headers headers) {
+  private static Message messageWithHeaders(byte[] data, @Nullable Headers headers) {
     return NatsMessage.builder().subject("test").data(data).headers(headers).build();
   }
 

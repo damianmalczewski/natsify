@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.support.AopUtils;
 
 final class JetStreamInvocation implements Consumer<Message> {
 
@@ -58,8 +59,15 @@ final class JetStreamInvocation implements Consumer<Message> {
       args = argumentResolver.resolveArguments(listener.getMethod().getParameters(), msg);
     } catch (Exception e) {
       log.error(
-          "Unable to resolve arguments for NATS JetStream handler {}, terminating message",
-          listener.getMethod(),
+          "Unable to resolve arguments for NATS JetStream handler {}.{}, terminating message, subject={}, stream={}, streamSequence={}, consumerSequence={}, deliveredCount={}, timestamp={}",
+          AopUtils.getTargetClass(listener.getBean()).getSimpleName(),
+          listener.getMethod().getName(),
+          msg.getSubject(),
+          msg.metaData() != null ? msg.metaData().getStream() : null,
+          msg.metaData() != null ? msg.metaData().streamSequence() : null,
+          msg.metaData() != null ? msg.metaData().consumerSequence() : null,
+          msg.metaData() != null ? msg.metaData().deliveredCount() : null,
+          msg.metaData() != null ? msg.metaData().timestamp().toInstant() : null,
           e);
       msg.term();
       observer.onTerminated(listener.getSubject(), listener.getStream(), e);

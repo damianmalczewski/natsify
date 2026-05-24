@@ -69,7 +69,7 @@ public class SimpleMessageArgumentResolver implements MessageArgumentResolver {
     if (param.isAnnotationPresent(NatsHeaders.class)
         || (!param.isAnnotationPresent(NatsPayload.class)
             && Headers.class.isAssignableFrom(param.getType()))) {
-      return msg.getHeaders();
+      return msg.getHeaders() != null ? msg.getHeaders() : new Headers(null, false);
     }
     byte[] data = msg.getData();
     if (param.getType() == byte[].class) {

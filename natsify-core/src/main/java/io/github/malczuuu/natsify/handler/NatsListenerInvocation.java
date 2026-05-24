@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.support.AopUtils;
 
 final class NatsListenerInvocation implements Consumer<Message> {
 
@@ -57,8 +58,10 @@ final class NatsListenerInvocation implements Consumer<Message> {
       args = argumentResolver.resolveArguments(listener.getMethod().getParameters(), msg);
     } catch (Exception e) {
       log.error(
-          "Unable to resolve arguments for NATS listener {}, dropping message",
-          listener.getMethod(),
+          "Unable to resolve arguments for NATS listener {}.{}, dropping message, subject={}",
+          AopUtils.getTargetClass(listener.getBean()).getSimpleName(),
+          listener.getMethod().getName(),
+          msg.getSubject(),
           e);
       observer.onFailed(listener.getSubject(), listener.getQueue());
       return;

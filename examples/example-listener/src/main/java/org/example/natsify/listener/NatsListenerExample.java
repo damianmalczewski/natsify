@@ -42,7 +42,7 @@ public class NatsListenerExample {
   @NatsListener(subject = "telemetry.>")
   public void onRecord(SenmlRecord record) {
     records.add(record);
-    log.debug("Received telemetry: {}", record);
+    log.info("Received telemetry on NatsListener - {}", record);
   }
 
   public void clear() {
