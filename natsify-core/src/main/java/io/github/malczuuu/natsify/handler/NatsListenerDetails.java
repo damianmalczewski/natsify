@@ -20,6 +20,11 @@ import java.lang.reflect.Method;
 import org.jspecify.annotations.Nullable;
 import org.springframework.aop.support.AopUtils;
 
+/**
+ * Holds metadata for a {@link
+ * io.github.malczuuu.natsify.annotation.NatsListener @NatsListener}-annotated method, including the
+ * target bean, method, subject, and queue group.
+ */
 public final class NatsListenerDetails {
 
   private final Object bean;
@@ -34,22 +39,47 @@ public final class NatsListenerDetails {
     this.queue = queue;
   }
 
+  /**
+   * Returns the Spring bean that declares the listener method.
+   *
+   * @return the listener bean
+   */
   public Object getBean() {
     return bean;
   }
 
+  /**
+   * Returns the listener method.
+   *
+   * @return the listener method
+   */
   public Method getMethod() {
     return method;
   }
 
+  /**
+   * Returns the NATS subject the listener subscribes to.
+   *
+   * @return the NATS subject
+   */
   public String getSubject() {
     return subject;
   }
 
+  /**
+   * Returns the queue group name, or an empty string if none was specified.
+   *
+   * @return the queue group name
+   */
   public String getQueue() {
     return queue;
   }
 
+  /**
+   * Returns a string representation of this listener details.
+   *
+   * @return string representation
+   */
   @Override
   public String toString() {
     return ("[bean=" + AopUtils.getTargetClass(bean).getSimpleName())
@@ -58,10 +88,16 @@ public final class NatsListenerDetails {
         + (", queue=" + queue + "]");
   }
 
+  /**
+   * Returns a new {@link Builder} for constructing a {@link NatsListenerDetails} instance.
+   *
+   * @return a new builder
+   */
   public static Builder builder() {
     return new Builder();
   }
 
+  /** Builder for {@link NatsListenerDetails}. */
   public static final class Builder {
 
     private @Nullable Object bean;
@@ -71,26 +107,56 @@ public final class NatsListenerDetails {
 
     private Builder() {}
 
+    /**
+     * Sets the target bean.
+     *
+     * @param bean the Spring bean that declares the listener method
+     * @return this builder
+     */
     public Builder withBean(@Nullable Object bean) {
       this.bean = bean;
       return this;
     }
 
+    /**
+     * Sets the listener method.
+     *
+     * @param method the annotated method
+     * @return this builder
+     */
     public Builder withMethod(@Nullable Method method) {
       this.method = method;
       return this;
     }
 
+    /**
+     * Sets the NATS subject.
+     *
+     * @param subject the NATS subject to subscribe to
+     * @return this builder
+     */
     public Builder withSubject(@Nullable String subject) {
       this.subject = subject;
       return this;
     }
 
+    /**
+     * Sets the queue group name.
+     *
+     * @param queue the queue group name, or an empty string for none
+     * @return this builder
+     */
     public Builder withQueue(@Nullable String queue) {
       this.queue = queue;
       return this;
     }
 
+    /**
+     * Builds the {@link NatsListenerDetails} instance.
+     *
+     * @return a new {@link NatsListenerDetails}
+     * @throws IllegalStateException if any required field is null
+     */
     public NatsListenerDetails build() {
       if (bean == null) throw new IllegalStateException("bean is required");
       if (method == null) throw new IllegalStateException("method is required");

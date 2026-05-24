@@ -30,6 +30,10 @@ import org.springframework.core.MethodIntrospector;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.StringValueResolver;
 
+/**
+ * Scans Spring beans for {@link NatsListener @NatsListener}-annotated methods and registers them
+ * with {@link NatsListenerRegistry}.
+ */
 public class NatsListenerAnnotationBeanPostProcessor
     implements BeanPostProcessor, EmbeddedValueResolverAware {
 
@@ -40,15 +44,34 @@ public class NatsListenerAnnotationBeanPostProcessor
 
   private StringValueResolver valueResolver = value -> value;
 
+  /**
+   * Creates a new {@code NatsListenerAnnotationBeanPostProcessor}.
+   *
+   * @param natsListenerRegistry registry to register discovered listeners with
+   */
   public NatsListenerAnnotationBeanPostProcessor(NatsListenerRegistry natsListenerRegistry) {
     this.natsListenerRegistry = natsListenerRegistry;
   }
 
+  /**
+   * Sets the resolver used to evaluate placeholder expressions in annotation attributes.
+   *
+   * @param resolver the embedded value resolver
+   */
   @Override
   public void setEmbeddedValueResolver(StringValueResolver resolver) {
     this.valueResolver = resolver;
   }
 
+  /**
+   * Scans the bean for {@link NatsListener @NatsListener} methods and registers each as a {@link
+   * NatsListenerDetails}.
+   *
+   * @param bean the bean instance
+   * @param beanName the bean name
+   * @return the bean instance unchanged
+   * @throws BeansException if post-processing fails
+   */
   @Override
   public @Nullable Object postProcessAfterInitialization(Object bean, String beanName)
       throws BeansException {

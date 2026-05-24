@@ -21,6 +21,7 @@ import io.nats.client.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Manages NATS Core subscription handlers for registered {@link NatsListenerDetails listeners}. */
 public class NatsListenerManager implements ListenerManager {
 
   private final NatsListenerRegistry natsListenerRegistry;
@@ -29,6 +30,13 @@ public class NatsListenerManager implements ListenerManager {
 
   private final List<NatsListenerHandler> handlers = new ArrayList<>();
 
+  /**
+   * Creates a new {@code NatsListenerManager}.
+   *
+   * @param natsListenerRegistry registry of listener details to initialize
+   * @param argumentResolver resolver used to map message data to handler method arguments
+   * @param observer observer notified on listener invocations
+   */
   public NatsListenerManager(
       NatsListenerRegistry natsListenerRegistry,
       MessageArgumentResolver argumentResolver,
@@ -38,6 +46,13 @@ public class NatsListenerManager implements ListenerManager {
     this.observer = observer;
   }
 
+  /**
+   * Initializes and starts all handlers using the given NATS connection. Creates a subscription
+   * handler for each registered {@link NatsListenerDetails}.
+   *
+   * @param connection the active NATS connection
+   * @throws Exception if any handler fails to start
+   */
   @Override
   public synchronized void initialize(Connection connection) throws Exception {
     for (NatsListenerDetails listener : natsListenerRegistry.getListeners()) {
@@ -51,6 +66,7 @@ public class NatsListenerManager implements ListenerManager {
     }
   }
 
+  /** Stops all active handlers. */
   @Override
   public synchronized void stop() {
     handlers.forEach(NatsListenerHandler::stop);

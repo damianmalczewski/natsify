@@ -20,18 +20,31 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/** Thread-safe {@link JetStreamListenerRegistry} backed by a {@link CopyOnWriteArrayList}. */
 public final class SimpleJetStreamListenerRegistry implements JetStreamListenerRegistry {
 
   private final List<JetStreamListenerDetails> listeners = new CopyOnWriteArrayList<>();
 
+  /** Creates a new {@code SimpleJetStreamListenerRegistry}. */
   public SimpleJetStreamListenerRegistry() {}
 
+  /**
+   * Registers a listener. Also marks the listener method as accessible to support non-public
+   * methods.
+   *
+   * @param listener the listener details to register
+   */
   @Override
   public void register(JetStreamListenerDetails listener) {
     listener.getMethod().setAccessible(true);
     listeners.add(listener);
   }
 
+  /**
+   * Returns all registered listeners.
+   *
+   * @return immutable list of registered listener details
+   */
   @Override
   public List<JetStreamListenerDetails> getListeners() {
     return Collections.unmodifiableList(listeners);

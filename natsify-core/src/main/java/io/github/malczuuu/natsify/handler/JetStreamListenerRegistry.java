@@ -16,11 +16,26 @@
 
 package io.github.malczuuu.natsify.handler;
 
+import io.github.malczuuu.natsify.annotation.JetStreamListener;
 import java.util.List;
 
+/**
+ * Registry for {@link JetStreamListenerDetails} describing {@link
+ * JetStreamListener @JetStreamListener}-annotated methods.
+ */
 public interface JetStreamListenerRegistry {
 
+  /**
+   * Registers a listener.
+   *
+   * @param listener the listener details to register
+   */
   void register(JetStreamListenerDetails listener);
 
+  /**
+   * Returns all registered listeners.
+   *
+   * @return immutable list of registered listener details
+   */
   List<JetStreamListenerDetails> getListeners();
 }

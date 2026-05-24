@@ -20,9 +20,24 @@ import io.nats.client.Message;
 import java.lang.reflect.Parameter;
 import org.jspecify.annotations.Nullable;
 
+/** Resolves method arguments from a NATS {@link Message}. */
 public interface MessageArgumentResolver {
 
+  /**
+   * Resolves all parameters for a listener method from the given message.
+   *
+   * @param params the method parameters to resolve
+   * @param msg the received message
+   * @return array of resolved arguments, or {@code null}
+   */
   Object @Nullable [] resolveArguments(Parameter[] params, Message msg);
 
+  /**
+   * Resolves a single method parameter from the given message.
+   *
+   * @param param the method parameter to resolve
+   * @param msg the received message
+   * @return the resolved argument, or {@code null}
+   */
   @Nullable Object resolveArgument(Parameter param, Message msg);
 }

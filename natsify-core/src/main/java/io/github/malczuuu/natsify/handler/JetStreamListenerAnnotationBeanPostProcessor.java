@@ -29,6 +29,10 @@ import org.springframework.core.MethodIntrospector;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.StringValueResolver;
 
+/**
+ * Scans Spring beans for {@link JetStreamListener @JetStreamListener}-annotated methods and
+ * registers them with {@link JetStreamListenerRegistry}.
+ */
 public class JetStreamListenerAnnotationBeanPostProcessor
     implements BeanPostProcessor, EmbeddedValueResolverAware {
 
@@ -39,16 +43,34 @@ public class JetStreamListenerAnnotationBeanPostProcessor
 
   private StringValueResolver valueResolver = value -> value;
 
+  /**
+   * Creates a new {@code JetStreamListenerAnnotationBeanPostProcessor}.
+   *
+   * @param jetStreamListenerRegistry registry to register discovered listeners with
+   */
   public JetStreamListenerAnnotationBeanPostProcessor(
       JetStreamListenerRegistry jetStreamListenerRegistry) {
     this.jetStreamListenerRegistry = jetStreamListenerRegistry;
   }
 
+  /**
+   * Sets the resolver used to evaluate placeholder expressions in annotation attributes.
+   *
+   * @param resolver the embedded value resolver
+   */
   @Override
   public void setEmbeddedValueResolver(StringValueResolver resolver) {
     this.valueResolver = resolver;
   }
 
+  /**
+   * Scans the bean for {@link JetStreamListener @JetStreamListener} methods and registers each as a
+   * {@link JetStreamListenerDetails}.
+   *
+   * @param bean the bean instance
+   * @param beanName the bean name
+   * @return the bean instance unchanged
+   */
   @Override
   public @Nullable Object postProcessAfterInitialization(Object bean, String beanName) {
     Class<?> clazz = AopUtils.getTargetClass(bean);

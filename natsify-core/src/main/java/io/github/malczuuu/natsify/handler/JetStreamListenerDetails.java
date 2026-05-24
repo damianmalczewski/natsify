@@ -23,6 +23,12 @@ import java.lang.reflect.Method;
 import org.jspecify.annotations.Nullable;
 import org.springframework.aop.support.AopUtils;
 
+/**
+ * Holds metadata for a {@link
+ * io.github.malczuuu.natsify.annotation.JetStreamListener @JetStreamListener}-annotated method,
+ * including the target bean, method, subject, stream, durable consumer name, queue group, consumer
+ * type, ack mode, and deliver policy.
+ */
 public final class JetStreamListenerDetails {
 
   private final Object bean;
@@ -56,42 +62,92 @@ public final class JetStreamListenerDetails {
     this.deliverPolicy = deliverPolicy;
   }
 
+  /**
+   * Returns the Spring bean that declares the listener method.
+   *
+   * @return the listener bean
+   */
   public Object getBean() {
     return bean;
   }
 
+  /**
+   * Returns the listener method.
+   *
+   * @return the listener method
+   */
   public Method getMethod() {
     return method;
   }
 
+  /**
+   * Returns the NATS subject filter for the consumer.
+   *
+   * @return the NATS subject
+   */
   public String getSubject() {
     return subject;
   }
 
+  /**
+   * Returns the JetStream stream name.
+   *
+   * @return the stream name
+   */
   public String getStream() {
     return stream;
   }
 
+  /**
+   * Returns the durable consumer name, or an empty string for an ephemeral consumer.
+   *
+   * @return the durable consumer name
+   */
   public String getDurable() {
     return durable;
   }
 
+  /**
+   * Returns the queue group name for push consumers, or an empty string if none.
+   *
+   * @return the queue group name
+   */
   public String getQueue() {
     return queue;
   }
 
+  /**
+   * Returns the consumer type (push or pull).
+   *
+   * @return the consumer type
+   */
   public ConsumerType getConsumerType() {
     return consumerType;
   }
 
+  /**
+   * Returns the acknowledgement mode for received messages.
+   *
+   * @return the ack mode
+   */
   public AckMode getAckMode() {
     return ackMode;
   }
 
+  /**
+   * Returns the deliver policy controlling which messages the consumer receives.
+   *
+   * @return the deliver policy
+   */
   public DeliverPolicyType getDeliverPolicy() {
     return deliverPolicy;
   }
 
+  /**
+   * Returns a string representation of this listener details.
+   *
+   * @return string representation
+   */
   @Override
   public String toString() {
     return ("[bean=" + AopUtils.getTargetClass(bean).getSimpleName())
@@ -105,10 +161,16 @@ public final class JetStreamListenerDetails {
         + (", deliverPolicy=" + deliverPolicy + "]");
   }
 
+  /**
+   * Returns a new {@link Builder} for constructing a {@link JetStreamListenerDetails} instance.
+   *
+   * @return a new builder
+   */
   public static Builder builder() {
     return new Builder();
   }
 
+  /** Builder for {@link JetStreamListenerDetails}. */
   public static final class Builder {
 
     private @Nullable Object bean;
@@ -123,51 +185,111 @@ public final class JetStreamListenerDetails {
 
     private Builder() {}
 
+    /**
+     * Sets the target bean.
+     *
+     * @param bean the Spring bean that declares the listener method
+     * @return this builder
+     */
     public Builder withBean(@Nullable Object bean) {
       this.bean = bean;
       return this;
     }
 
+    /**
+     * Sets the listener method.
+     *
+     * @param method the annotated method
+     * @return this builder
+     */
     public Builder withMethod(@Nullable Method method) {
       this.method = method;
       return this;
     }
 
+    /**
+     * Sets the NATS subject filter for the consumer.
+     *
+     * @param subject the NATS subject
+     * @return this builder
+     */
     public Builder withSubject(@Nullable String subject) {
       this.subject = subject;
       return this;
     }
 
+    /**
+     * Sets the JetStream stream name.
+     *
+     * @param stream the stream name
+     * @return this builder
+     */
     public Builder withStream(@Nullable String stream) {
       this.stream = stream;
       return this;
     }
 
+    /**
+     * Sets the durable consumer name.
+     *
+     * @param durable the durable consumer name, or an empty string for ephemeral
+     * @return this builder
+     */
     public Builder withDurable(@Nullable String durable) {
       this.durable = durable;
       return this;
     }
 
+    /**
+     * Sets the queue group name.
+     *
+     * @param queue the queue group name, or an empty string for none
+     * @return this builder
+     */
     public Builder withQueue(@Nullable String queue) {
       this.queue = queue;
       return this;
     }
 
+    /**
+     * Sets the consumer type.
+     *
+     * @param consumerType push or pull consumer type
+     * @return this builder
+     */
     public Builder withConsumerType(@Nullable ConsumerType consumerType) {
       this.consumerType = consumerType;
       return this;
     }
 
+    /**
+     * Sets the acknowledgement mode.
+     *
+     * @param ackMode the ack mode for received messages
+     * @return this builder
+     */
     public Builder withAckMode(@Nullable AckMode ackMode) {
       this.ackMode = ackMode;
       return this;
     }
 
+    /**
+     * Sets the deliver policy.
+     *
+     * @param deliverPolicy the deliver policy controlling which messages the consumer receives
+     * @return this builder
+     */
     public Builder withDeliverPolicy(@Nullable DeliverPolicyType deliverPolicy) {
       this.deliverPolicy = deliverPolicy;
       return this;
     }
 
+    /**
+     * Builds the {@link JetStreamListenerDetails} instance.
+     *
+     * @return a new {@link JetStreamListenerDetails}
+     * @throws IllegalStateException if any required field is null
+     */
     public JetStreamListenerDetails build() {
       if (bean == null) throw new IllegalStateException("bean is required");
       if (method == null) throw new IllegalStateException("method is required");

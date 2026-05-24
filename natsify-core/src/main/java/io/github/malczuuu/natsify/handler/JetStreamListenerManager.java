@@ -27,6 +27,9 @@ import io.nats.client.api.DeliverPolicy;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Manages JetStream consumer handlers for registered {@link JetStreamListenerDetails listeners}.
+ */
 public class JetStreamListenerManager implements ListenerManager {
 
   private final JetStreamListenerRegistry registry;
@@ -35,6 +38,13 @@ public class JetStreamListenerManager implements ListenerManager {
 
   private final List<JetStreamHandler> handlers = new ArrayList<>();
 
+  /**
+   * Creates a new {@code JetStreamListenerManager}.
+   *
+   * @param registry registry of listener details to initialize
+   * @param argumentResolver resolver used to map message data to handler method arguments
+   * @param observer observer notified on listener invocations
+   */
   public JetStreamListenerManager(
       JetStreamListenerRegistry registry,
       MessageArgumentResolver argumentResolver,
@@ -44,6 +54,14 @@ public class JetStreamListenerManager implements ListenerManager {
     this.observer = observer;
   }
 
+  /**
+   * Initializes and starts all handlers using the given NATS connection. Creates a push or pull
+   * consumer handler for each registered {@link JetStreamListenerDetails}. Does nothing if no
+   * listeners are registered.
+   *
+   * @param connection the active NATS connection
+   * @throws Exception if any handler fails to start
+   */
   @Override
   public synchronized void initialize(Connection connection) throws Exception {
     if (registry.getListeners().isEmpty()) {
@@ -63,6 +81,7 @@ public class JetStreamListenerManager implements ListenerManager {
     }
   }
 
+  /** Stops all active handlers. */
   @Override
   public synchronized void stop() {
     handlers.forEach(JetStreamHandler::stop);

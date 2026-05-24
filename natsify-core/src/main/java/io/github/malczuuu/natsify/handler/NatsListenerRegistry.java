@@ -16,11 +16,26 @@
 
 package io.github.malczuuu.natsify.handler;
 
+import io.github.malczuuu.natsify.annotation.NatsListener;
 import java.util.List;
 
+/**
+ * Registry for {@link NatsListenerDetails} describing {@link NatsListener @NatsListener}-annotated
+ * methods.
+ */
 public interface NatsListenerRegistry {
 
+  /**
+   * Registers a listener.
+   *
+   * @param listener the listener details to register
+   */
   void register(NatsListenerDetails listener);
 
+  /**
+   * Returns all registered listeners.
+   *
+   * @return immutable list of registered listener details
+   */
   List<NatsListenerDetails> getListeners();
 }

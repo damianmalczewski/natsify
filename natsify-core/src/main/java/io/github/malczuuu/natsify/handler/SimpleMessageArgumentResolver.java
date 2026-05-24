@@ -28,14 +28,34 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.json.JsonMapper;
 
+/**
+ * Jackson-based {@link MessageArgumentResolver} that resolves listener method parameters from NATS
+ * message data, headers, and metadata.
+ *
+ * <p>Supports parameters of type {@link Message}, {@link Headers} (with or without {@link
+ * NatsHeaders @NatsHeaders}), individual header values via {@link NatsHeader @NatsHeader}, {@code
+ * byte[]}, {@link String}, and arbitrary JSON-deserializable types.
+ */
 public class SimpleMessageArgumentResolver implements MessageArgumentResolver {
 
   private final JsonMapper jsonMapper;
 
+  /**
+   * Creates a new {@code SimpleMessageArgumentResolver}.
+   *
+   * @param jsonMapper Jackson mapper used for JSON deserialization of payload parameters
+   */
   public SimpleMessageArgumentResolver(JsonMapper jsonMapper) {
     this.jsonMapper = jsonMapper;
   }
 
+  /**
+   * Resolves all parameters for a listener method from the given message.
+   *
+   * @param params the method parameters to resolve
+   * @param msg the received message
+   * @return array of resolved arguments, or {@code null}
+   */
   @Override
   public Object @Nullable [] resolveArguments(Parameter[] params, Message msg) {
     List<@Nullable Object> args = new ArrayList<>(params.length);
@@ -45,6 +65,13 @@ public class SimpleMessageArgumentResolver implements MessageArgumentResolver {
     return args.toArray();
   }
 
+  /**
+   * Resolves a single method parameter from the given message.
+   *
+   * @param param the method parameter to resolve
+   * @param msg the received message
+   * @return the resolved argument, or {@code null}
+   */
   @Override
   public @Nullable Object resolveArgument(Parameter param, Message msg) {
     if (Message.class.isAssignableFrom(param.getType())) {
