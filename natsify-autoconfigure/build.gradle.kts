@@ -11,6 +11,7 @@ dependencies {
     api(libs.spring.boot.autoconfigure)
     api(project(":natsify-core"))
 
+    compileOnly(libs.spring.boot.health)
     compileOnly(libs.spring.boot.testcontainers)
     compileOnly(libs.jackson.databind)
     compileOnly(libs.micrometer.core)
@@ -20,6 +21,7 @@ dependencies {
 
     // Test
     testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.spring.boot.health)
     testImplementation(libs.spring.boot.jackson)
     testImplementation(libs.spring.boot.testcontainers)
     testImplementation(libs.testcontainers.junit.jupiter)

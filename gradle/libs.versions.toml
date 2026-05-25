@@ -40,8 +40,10 @@ spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-st
 spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test", version.ref = "spring-boot" }
 
 # spring boot modules
+spring-boot-actuator-autoconfigure = { module = "org.springframework.boot:spring-boot-actuator-autoconfigure", version.ref = "spring-boot" }
 spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "spring-boot" }
 spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor", version.ref = "spring-boot" }
+spring-boot-health = { module = "org.springframework.boot:spring-boot-health", version.ref = "spring-boot" }
 spring-boot-jackson = { module = "org.springframework.boot:spring-boot-jackson", version.ref = "spring-boot" }
 spring-boot-resttestclient = { module = "org.springframework.boot:spring-boot-resttestclient", version.ref = "spring-boot" }
 spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers", version.ref = "spring-boot" }
