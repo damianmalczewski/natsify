@@ -81,6 +81,18 @@ public class MicrometerNatsListenerObserver implements NatsListenerObserver, Met
   }
 
   /**
+   * Called when a message is dead-lettered after a failure.
+   *
+   * @param subject the NATS subject
+   * @param queue the queue group name, or empty string if not in a queue group
+   */
+  @Override
+  public void onDeadLettered(String subject, String queue) {
+    Tags tags = Tags.of(Tag.of("subject", subject), Tag.of("queue", queue));
+    meterRegistry.counter("nats.listener.messages.deadlettered", tags).increment();
+  }
+
+  /**
    * Called after every invocation (success or failure) with the total processing duration.
    *
    * @param subject the NATS subject

@@ -41,7 +41,7 @@ final class JetStreamPushHandler implements JetStreamHandler {
   private final ConsumerConfiguration configuration;
   private final Consumer<Message> messageConsumer;
 
-  private boolean running = false;
+  private volatile boolean running = false;
   private @Nullable Dispatcher dispatcher = null;
   private @Nullable JetStreamSubscription subscription = null;
 
@@ -65,7 +65,6 @@ final class JetStreamPushHandler implements JetStreamHandler {
           "Attempted to call start() on already started "
               + JetStreamPushHandler.class.getSimpleName());
     }
-    running = true;
 
     PushSubscribeOptions.Builder builder =
         PushSubscribeOptions.builder().configuration(configuration);
@@ -93,6 +92,7 @@ final class JetStreamPushHandler implements JetStreamHandler {
           listener.getSubject(),
           listener.getQueue());
     }
+    running = true;
   }
 
   @Override

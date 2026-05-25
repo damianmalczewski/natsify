@@ -40,6 +40,7 @@ public @interface JetStreamListener {
 
   /**
    * Stream name to bind the consumer to. Optional if the subject uniquely identifies a stream.
+   * Supports property placeholders (e.g., {@code ${my.stream}}).
    *
    * @return the stream name
    */
@@ -47,13 +48,15 @@ public @interface JetStreamListener {
 
   /**
    * Durable consumer name. Enables resuming from the last acknowledged position after a restart.
+   * Supports property placeholders (e.g., {@code ${my.durable}}).
    *
    * @return the durable consumer name
    */
   String durable() default "";
 
   /**
-   * Queue group name for load-balanced delivery across multiple instances.
+   * Queue group name for load-balanced delivery across multiple instances. Supports property
+   * placeholders (e.g., {@code ${my.queue}}).
    *
    * @return the queue group name
    */
@@ -81,11 +84,20 @@ public @interface JetStreamListener {
   DeliverPolicyType deliverPolicy() default DeliverPolicyType.NEW;
 
   /**
-   * Subject to publish failed messages to after {@link #maxDeliveries()} attempts. Empty string
-   * disables the dead-letter queue. Supports property placeholders (e.g., {@code ${my.dlq}}).
+   * Subject to publish failed messages to. Empty string disables dead-lettering. Supports property
+   * placeholders (e.g., {@code ${my.dlq}}).
    *
    * <p>Requires {@link #maxDeliveries()} to be positive. Not compatible with {@link
    * AckMode#MANUAL}.
+   *
+   * <p>Delivery semantics differ by failure type:
+   *
+   * <ul>
+   *   <li><b>Deserialization failure</b> - message is terminated and dead-lettered immediately on
+   *       the first delivery attempt. Retrying a malformed payload would never succeed.
+   *   <li><b>Handler invocation failure</b> - message is nacked and redelivered until {@link
+   *       #maxDeliveries()} is exhausted, then terminated and dead-lettered.
+   * </ul>
    *
    * @return the dead-letter subject
    */

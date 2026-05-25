@@ -16,6 +16,8 @@
 
 package io.github.malczuuu.natsify.handler;
 
+import static io.github.malczuuu.natsify.handler.ListenerMethodValidation.validateJetStreamListenerMethod;
+
 import io.github.malczuuu.natsify.annotation.AckMode;
 import io.github.malczuuu.natsify.annotation.ConsumerType;
 import io.github.malczuuu.natsify.annotation.DeliverPolicyType;
@@ -368,7 +370,7 @@ public final class JetStreamListenerDetails {
         throw new IllegalArgumentException(
             "deadLetterSubject is not supported with MANUAL ack mode");
       }
-      ListenerMethodValidation.validateJetStreamListener(method);
+      validateJetStreamListenerMethod(method);
       return new JetStreamListenerDetails(
           bean,
           method,

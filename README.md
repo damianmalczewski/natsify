@@ -16,6 +16,10 @@ Requires Spring Boot 4.x.
 - [Listener annotations](#listener-annotations)
     - [`@NatsListener`](#natslistener)
     - [`@JetStreamListener`](#jetstreamlistener)
+- [Dead-lettering](#dead-lettering)
+    - [Core NATS](#core-nats)
+    - [JetStream](#jetstream)
+    - [Dead-letter headers](#dead-letter-headers)
 - [Method parameter types](#method-parameter-types)
     - [Parameter annotations](#parameter-annotations)
         - [`@NatsPayload`](#natspayload)
@@ -55,10 +59,11 @@ public void onOrder(Order order) {}
 public void onOrderQueued(Order order) {}
 ```
 
-| Attribute | Description                                                                                  |
-|-----------|----------------------------------------------------------------------------------------------|
-| `subject` | NATS subject pattern (wildcards `*` and `>` supported). Supports `${property}` placeholders. |
-| `queue`   | Optional queue group name for competing-consumer load balancing.                             |
+| Attribute           | Description                                                                                  |
+|---------------------|----------------------------------------------------------------------------------------------|
+| `subject`           | NATS subject pattern (wildcards `*` and `>` supported). Supports `${property}` placeholders. |
+| `queue`             | Optional queue group name for competing-consumer load balancing.                             |
+| `deadLetterSubject` | Optional subject to publish failed messages to. Empty string (default) disables DLQ.         |
 
 ### `@JetStreamListener`
 
@@ -77,12 +82,73 @@ public void onOrder(Order order) {}
 public void onOrderQueued(Order order) {}
 ```
 
-| Attribute | Description                                                                       |
-|-----------|-----------------------------------------------------------------------------------|
-| `subject` | Subject pattern to filter within the stream. Supports `${property}` placeholders. |
-| `stream`  | JetStream stream name. Optional; NATS will infer from the subject if omitted.     |
-| `durable` | Durable consumer name. Omit for an ephemeral consumer.                            |
-| `queue`   | Optional queue group name for competing-consumer load balancing.                  |
+| Attribute           | Description                                                                                       |
+|---------------------|---------------------------------------------------------------------------------------------------|
+| `subject`           | Subject pattern to filter within the stream. Supports `${property}` placeholders.                 |
+| `stream`            | JetStream stream name. Optional; NATS will infer from the subject if omitted.                     |
+| `durable`           | Durable consumer name. Omit for an ephemeral consumer.                                            |
+| `queue`             | Optional queue group name for competing-consumer load balancing.                                  |
+| `deadLetterSubject` | Optional subject to publish failed messages to. Empty string (default) disables DLQ.              |
+| `maxDeliveries`     | Maximum delivery attempts before dead-lettering. Required when `deadLetterSubject` is set.        |
+| `ackMode`           | `AUTO` (default) acks on success and nacks on failure; `MANUAL` leaves ack to the handler.        |
+| `deliverPolicy`     | Which messages to receive on first connect: `NEW` (default), `ALL`, or `LAST`.                    |
+| `consumerType`      | `PULL` (default) or `PUSH`.                                                                       |
+
+## Dead-lettering
+
+Both listener types support a `deadLetterSubject` attribute. When set, failed messages are published to that subject
+instead of being silently dropped. All original message headers are forwarded, and additional `X-Dead-Letter-*` headers
+are added (see [Dead-letter headers](#dead-letter-headers) below).
+
+### Core NATS
+
+Core NATS has no persistence or redelivery. Dead-lettering is **at-most-once**: a failure publishes to the DLQ
+immediately and the original message is gone regardless.
+
+```java
+@NatsListener(subject = "orders.placed", deadLetterSubject = "orders.placed.dlq")
+public void onOrder(Order order) { ... }
+```
+
+Both argument resolution failures (malformed payload) and handler invocation failures dead-letter on the first attempt.
+If the DLQ publish itself fails, the error is logged and the message is dropped.
+
+### JetStream
+
+JetStream has persistence and delivery tracking, so dead-lettering integrates with the retry lifecycle:
+
+```java
+@JetStreamListener(
+    subject = "orders.>",
+    stream = "ORDERS",
+    durable = "order-processor",
+    deadLetterSubject = "orders.dlq",
+    maxDeliveries = 3)
+public void onOrder(Order order) { ... }
+```
+
+| Failure type                | Behaviour                                                                                                 |
+|-----------------------------|-----------------------------------------------------------------------------------------------------------|
+| Argument resolution failure | Message published to DLQ immediately, then `term()`-ed. Retrying a malformed payload would never succeed. |
+| Handler invocation failure  | Message is `nak()`-ed and redelivered up to `maxDeliveries` times, then published to DLQ and `term()`-ed. |
+
+If the DLQ publish itself fails, the exception propagates: the message is **not** terminated and will be redelivered.
+This may push the delivery count above `maxDeliveries`, which is intentional - the message is retried until the DLQ
+becomes reachable rather than being lost.
+
+### Dead-letter headers
+
+Every dead-letter message carries the following headers in addition to all headers from the original message:
+
+| Header                    | Present for    | Value                                                          |
+|---------------------------|----------------|----------------------------------------------------------------|
+| `X-Dead-Letter-Subject`   | Both           | Original subject the message was received on                   |
+| `X-Dead-Letter-Reason`    | Both           | Exception simple name and message, truncated to 200 characters |
+| `X-Dead-Letter-Exception` | Both           | Fully-qualified exception class name                           |
+| `X-Dead-Letter-Timestamp` | Both           | ISO-8601 UTC timestamp of the dead-letter publish              |
+| `X-Dead-Letter-Stream`    | JetStream only | JetStream stream name                                          |
+| `X-Dead-Letter-Durable`   | JetStream only | Durable consumer name                                          |
+| `X-Dead-Letter-Delivery`  | JetStream only | Delivery count at the time of dead-lettering                   |
 
 ## Method parameter types
 
@@ -258,7 +324,7 @@ library integrates it with Spring Boot's `@ServiceConnection` for zero-config wi
 class MyIntegrationTests {
 
   @Container @ServiceConnection
-  static final NatsContainer nats = new NatsContainer("nats:2.14.0");
+  public static final NatsContainer nats = new NatsContainer("nats:2.14.0");
 }
 ```
 

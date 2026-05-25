@@ -24,6 +24,7 @@ import io.nats.client.JetStream;
 import io.nats.client.api.AckPolicy;
 import io.nats.client.api.ConsumerConfiguration;
 import io.nats.client.api.DeliverPolicy;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +36,8 @@ public class JetStreamListenerManager implements ListenerManager {
   private final JetStreamListenerRegistry registry;
   private final MessageArgumentResolver argumentResolver;
   private final JetStreamListenerObserver observer;
+  private final int pullFetchBatchSize;
+  private final Duration pullFetchTimeout;
 
   private final List<JetStreamHandler> handlers = new ArrayList<>();
 
@@ -44,14 +47,20 @@ public class JetStreamListenerManager implements ListenerManager {
    * @param registry registry of listener details to initialize
    * @param argumentResolver resolver used to map message data to handler method arguments
    * @param observer observer notified on listener invocations
+   * @param pullFetchBatchSize number of messages to fetch per poll cycle for pull consumers
+   * @param pullFetchTimeout maximum time to wait for messages in each fetch call for pull consumers
    */
   public JetStreamListenerManager(
       JetStreamListenerRegistry registry,
       MessageArgumentResolver argumentResolver,
-      JetStreamListenerObserver observer) {
+      JetStreamListenerObserver observer,
+      int pullFetchBatchSize,
+      Duration pullFetchTimeout) {
     this.registry = registry;
     this.argumentResolver = argumentResolver;
     this.observer = observer;
+    this.pullFetchBatchSize = pullFetchBatchSize;
+    this.pullFetchTimeout = pullFetchTimeout;
   }
 
   /**
@@ -81,10 +90,39 @@ public class JetStreamListenerManager implements ListenerManager {
     }
   }
 
-  /** Stops all active handlers. */
+  /** Stops all active handlers. Attempts to stop every handler before propagating failures. */
   @Override
   public synchronized void stop() {
-    handlers.forEach(JetStreamHandler::stop);
+    List<RuntimeException> failures = new ArrayList<>();
+    for (JetStreamHandler handler : handlers) {
+      try {
+        handler.stop();
+      } catch (RuntimeException e) {
+        failures.add(e);
+      }
+    }
+    if (!failures.isEmpty()) {
+      RuntimeException first = failures.get(0);
+      if (failures.size() == 1) {
+        throw first;
+      }
+      IllegalStateException composite =
+          new IllegalStateException(
+              failures.size() + " handler(s) failed to stop: " + summarize(failures), first);
+      failures.stream().skip(1).forEach(composite::addSuppressed);
+      throw composite;
+    }
+  }
+
+  private static String summarize(List<RuntimeException> failures) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < failures.size(); i++) {
+      if (i > 0) {
+        sb.append("; ");
+      }
+      sb.append('[').append(i).append("] ").append(failures.get(i).getMessage());
+    }
+    return sb.toString();
   }
 
   private JetStreamPushHandler createPushHandler(
@@ -109,7 +147,9 @@ public class JetStreamListenerManager implements ListenerManager {
         stream,
         listener,
         configuration,
-        new JetStreamInvocation(listener, argumentResolver, observer, connection));
+        new JetStreamInvocation(listener, argumentResolver, observer, connection),
+        pullFetchBatchSize,
+        pullFetchTimeout);
   }
 
   private ConsumerConfiguration buildConsumerConfiguration(JetStreamListenerDetails listener) {

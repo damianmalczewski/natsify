@@ -43,12 +43,27 @@ class NatsListenerDetailsTests {
             .withMethod(METHOD)
             .withSubject("orders.placed")
             .withQueue("processors")
+            .withDeadLetterSubject("orders.placed.dlq")
             .build();
 
     assertThat(listener.getBean()).isSameAs(BEAN);
     assertThat(listener.getMethod()).isSameAs(METHOD);
     assertThat(listener.getSubject()).isEqualTo("orders.placed");
     assertThat(listener.getQueue()).isEqualTo("processors");
+    assertThat(listener.getDeadLetterSubject()).isEqualTo("orders.placed.dlq");
+  }
+
+  @Test
+  void givenNoDeadLetterSubject_whenBuild_thenDeadLetterSubjectIsEmpty() {
+    NatsListenerDetails listener =
+        NatsListenerDetails.builder()
+            .withBean(BEAN)
+            .withMethod(METHOD)
+            .withSubject("orders.placed")
+            .withQueue("processors")
+            .build();
+
+    assertThat(listener.getDeadLetterSubject()).isEmpty();
   }
 
   @Test

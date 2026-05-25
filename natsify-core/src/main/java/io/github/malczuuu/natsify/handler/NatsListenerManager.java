@@ -60,16 +60,45 @@ public class NatsListenerManager implements ListenerManager {
           new SubscriptionHandler(
               connection,
               listener,
-              new NatsListenerInvocation(listener, argumentResolver, observer));
+              new NatsListenerInvocation(listener, argumentResolver, observer, connection));
       handlers.add(handler);
       handler.start();
     }
   }
 
-  /** Stops all active handlers. */
+  /** Stops all active handlers. Attempts to stop every handler before propagating failures. */
   @Override
   public synchronized void stop() {
-    handlers.forEach(NatsListenerHandler::stop);
+    List<RuntimeException> failures = new ArrayList<>();
+    for (NatsListenerHandler handler : handlers) {
+      try {
+        handler.stop();
+      } catch (RuntimeException e) {
+        failures.add(e);
+      }
+    }
     handlers.clear();
+    if (!failures.isEmpty()) {
+      RuntimeException first = failures.get(0);
+      if (failures.size() == 1) {
+        throw first;
+      }
+      IllegalStateException composite =
+          new IllegalStateException(
+              failures.size() + " handler(s) failed to stop: " + summarize(failures), first);
+      failures.stream().skip(1).forEach(composite::addSuppressed);
+      throw composite;
+    }
+  }
+
+  private static String summarize(List<RuntimeException> failures) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < failures.size(); i++) {
+      if (i > 0) {
+        sb.append("; ");
+      }
+      sb.append('[').append(i).append("] ").append(failures.get(i).getMessage());
+    }
+    return sb.toString();
   }
 }

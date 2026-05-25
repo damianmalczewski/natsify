@@ -98,6 +98,7 @@ public final class NatsAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean(ConnectionManager.class)
   ConnectionConfigurer natsConnectionConfigurer(
+      NatsProperties properties,
       ConnectionOptionsFactory connectionOptionsFactory,
       NatsListenerRegistry natsListenerRegistry,
       JetStreamListenerRegistry jetStreamListenerRegistry,
@@ -112,7 +113,11 @@ public final class NatsAutoConfiguration {
         List.of(
             new NatsListenerManager(natsListenerRegistry, argumentResolver, natsListenerObserver),
             new JetStreamListenerManager(
-                jetStreamListenerRegistry, argumentResolver, jetStreamListenerObserver)),
+                jetStreamListenerRegistry,
+                argumentResolver,
+                jetStreamListenerObserver,
+                properties.getPullFetchBatchSize(),
+                properties.getPullFetchTimeout())),
         natsConnectionObserver,
         natsErrorObserver);
   }

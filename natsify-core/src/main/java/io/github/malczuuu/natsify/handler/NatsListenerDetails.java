@@ -16,6 +16,8 @@
 
 package io.github.malczuuu.natsify.handler;
 
+import static io.github.malczuuu.natsify.handler.ListenerMethodValidation.validateNatsListenerMethod;
+
 import java.lang.reflect.Method;
 import org.jspecify.annotations.Nullable;
 import org.springframework.aop.support.AopUtils;
@@ -31,12 +33,15 @@ public final class NatsListenerDetails {
   private final Method method;
   private final String subject;
   private final String queue;
+  private final String deadLetterSubject;
 
-  private NatsListenerDetails(Object bean, Method method, String subject, String queue) {
+  private NatsListenerDetails(
+      Object bean, Method method, String subject, String queue, String deadLetterSubject) {
     this.bean = bean;
     this.method = method;
     this.subject = subject;
     this.queue = queue;
+    this.deadLetterSubject = deadLetterSubject;
   }
 
   /**
@@ -76,6 +81,15 @@ public final class NatsListenerDetails {
   }
 
   /**
+   * Returns the dead-letter subject, or an empty string if dead-lettering is disabled.
+   *
+   * @return the dead-letter subject
+   */
+  public String getDeadLetterSubject() {
+    return deadLetterSubject;
+  }
+
+  /**
    * Returns a string representation of this listener details.
    *
    * @return string representation
@@ -104,6 +118,7 @@ public final class NatsListenerDetails {
     private @Nullable Method method;
     private @Nullable String subject;
     private @Nullable String queue;
+    private String deadLetterSubject = "";
 
     private Builder() {}
 
@@ -152,6 +167,18 @@ public final class NatsListenerDetails {
     }
 
     /**
+     * Sets the dead-letter subject.
+     *
+     * @param deadLetterSubject the subject to publish failed messages to, or an empty string to
+     *     disable dead-lettering
+     * @return this builder
+     */
+    public Builder withDeadLetterSubject(String deadLetterSubject) {
+      this.deadLetterSubject = deadLetterSubject;
+      return this;
+    }
+
+    /**
      * Builds the {@link NatsListenerDetails} instance.
      *
      * @return a new {@link NatsListenerDetails}
@@ -162,8 +189,8 @@ public final class NatsListenerDetails {
       if (method == null) throw new IllegalArgumentException("method is required");
       if (subject == null) throw new IllegalArgumentException("subject is required");
       if (queue == null) throw new IllegalArgumentException("queue is required");
-      ListenerMethodValidation.validateNatsListener(method);
-      return new NatsListenerDetails(bean, method, subject, queue);
+      validateNatsListenerMethod(method);
+      return new NatsListenerDetails(bean, method, subject, queue, deadLetterSubject);
     }
   }
 }

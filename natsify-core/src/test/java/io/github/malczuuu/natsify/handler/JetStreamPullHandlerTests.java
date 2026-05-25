@@ -25,6 +25,7 @@ import io.github.malczuuu.natsify.core.ListenerConfigureException;
 import io.nats.client.JetStream;
 import io.nats.client.api.ConsumerConfiguration;
 import java.lang.reflect.Method;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -62,7 +63,12 @@ class JetStreamPullHandlerTests {
 
     handler =
         new JetStreamPullHandler(
-            stream, listener, ConsumerConfiguration.builder().build(), msg -> {});
+            stream,
+            listener,
+            ConsumerConfiguration.builder().build(),
+            msg -> {},
+            200,
+            Duration.ofMillis(200));
   }
 
   @Test

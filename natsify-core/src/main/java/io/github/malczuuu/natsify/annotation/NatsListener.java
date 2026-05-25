@@ -39,9 +39,30 @@ public @interface NatsListener {
   String subject() default "";
 
   /**
-   * Queue group name for load-balanced delivery across multiple instances.
+   * Queue group name for load-balanced delivery across multiple instances. Supports property
+   * placeholders (e.g., {@code ${my.queue}}).
    *
    * @return the queue group name
    */
   String queue() default "";
+
+  /**
+   * Subject to publish failed messages to. Empty string disables dead-lettering. Supports property
+   * placeholders (e.g., {@code ${my.dlq}}).
+   *
+   * <p>Core NATS provides no persistence or redelivery, so dead-lettering is at-most-once:
+   *
+   * <ul>
+   *   <li><b>Argument resolution failure</b> - message is dead-lettered immediately; retrying a
+   *       malformed payload would never succeed.
+   *   <li><b>Handler invocation failure</b> - message is dead-lettered immediately on first
+   *       failure; there is no retry mechanism in core NATS.
+   * </ul>
+   *
+   * <p>The publish itself is best-effort: if it fails, the failure is logged and the original
+   * message is silently dropped.
+   *
+   * @return the dead-letter subject
+   */
+  String deadLetterSubject() default "";
 }

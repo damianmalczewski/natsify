@@ -46,6 +46,7 @@ public class NatsListenerComponent {
   public final BlockingQueue<String> propertySubjectMessages = new LinkedBlockingQueue<>();
   public final BlockingQueue<List<SampleMessage>> genericLists = new LinkedBlockingQueue<>();
   public final BlockingQueue<SampleMessage[]> arrays = new LinkedBlockingQueue<>();
+  public final BlockingQueue<Message> deadLetterMessages = new LinkedBlockingQueue<>();
 
   @NatsListener(subject = "combo.no-args")
   public void handleNoArgs() {
@@ -117,6 +118,16 @@ public class NatsListenerComponent {
     headersValuesByType.add(allHeaders);
   }
 
+  @NatsListener(subject = "combo.dlq-source", deadLetterSubject = "combo.dead-letter")
+  public void handleDlqSource(String data) {
+    throw new RuntimeException("simulated failure for dlq test");
+  }
+
+  @NatsListener(subject = "combo.dead-letter")
+  public void handleDeadLetter(Message msg) {
+    deadLetterMessages.add(msg);
+  }
+
   public void clearAll() {
     messages.clear();
     bytesPayloads.clear();
@@ -131,5 +142,6 @@ public class NatsListenerComponent {
     propertySubjectMessages.clear();
     genericLists.clear();
     arrays.clear();
+    deadLetterMessages.clear();
   }
 }

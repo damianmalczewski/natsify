@@ -23,6 +23,6 @@ import org.testcontainers.junit.jupiter.Container;
 public abstract class AbstractIntegrationTests {
 
   @Container @ServiceConnection
-  public static final NatsContainer natsContainer =
+  public static final NatsContainer nats =
       new NatsContainer("nats:2.14.0").withAuth("nats", "nats").withJetStream();
 }

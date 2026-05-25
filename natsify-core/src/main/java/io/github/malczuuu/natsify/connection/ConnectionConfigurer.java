@@ -58,6 +58,7 @@ public final class ConnectionConfigurer
   private final NatsErrorObserver natsErrorObserver;
 
   private volatile @Nullable Connection connection = null;
+  private volatile boolean running = false;
 
   /**
    * Creates a new {@link ConnectionConfigurer}.
@@ -117,11 +118,13 @@ public final class ConnectionConfigurer
       }
       throw new ListenerConfigureException("Failed to set up annotation-based NATS listeners", e);
     }
+    running = true;
   }
 
   /** Stops all listener managers in reverse registration order and closes the NATS connection. */
   @Override
   public synchronized void stop() {
+    running = false;
     List<? extends ListenerManager> listenerManagers = new ArrayList<>(this.listenerManagers);
     Collections.reverse(listenerManagers);
     for (ListenerManager listenerManager : listenerManagers) {
@@ -148,13 +151,15 @@ public final class ConnectionConfigurer
   }
 
   /**
-   * Returns {@code true} if the NATS connection has been established and not yet closed.
+   * Returns {@code true} if {@link #start()} has been called and {@link #stop()} has not yet been
+   * called. The underlying connection may be established before {@code start()} via {@link
+   * #getConnection()}, but this method reflects only the managed lifecycle state.
    *
-   * @return {@code true} if connected
+   * @return {@code true} if running
    */
   @Override
   public boolean isRunning() {
-    return connection != null;
+    return running;
   }
 
   /**

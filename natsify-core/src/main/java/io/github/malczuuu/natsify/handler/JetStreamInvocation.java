@@ -16,16 +16,17 @@
 
 package io.github.malczuuu.natsify.handler;
 
+import static io.github.malczuuu.natsify.handler.DeadLetterSupport.buildAndPublishDeadLetter;
+import static io.github.malczuuu.natsify.handler.DeadLetterSupport.buildDeadLetterHeaders;
+
 import io.github.malczuuu.natsify.annotation.AckMode;
 import io.github.malczuuu.natsify.instrument.JetStreamListenerObserver;
 import io.nats.client.Connection;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
 import io.nats.client.impl.NatsJetStreamMetaData;
-import io.nats.client.impl.NatsMessage;
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
-import java.util.List;
 import java.util.function.Consumer;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -58,6 +59,8 @@ final class JetStreamInvocation implements Consumer<Message> {
     long start = System.nanoTime();
     try {
       doAccept(msg);
+    } catch (Exception e) {
+      msg.nak();
     } finally {
       observer.onProcessed(listener.getSubject(), listener.getStream(), System.nanoTime() - start);
     }
@@ -69,12 +72,12 @@ final class JetStreamInvocation implements Consumer<Message> {
       args = argumentResolver.resolveArguments(listener.getMethod().getParameters(), msg);
     } catch (Exception e) {
       logResolutionException(msg, e);
-      msg.term();
-      observer.onTerminated(listener.getSubject(), listener.getStream(), e);
       if (!listener.getDeadLetterSubject().isEmpty()) {
         publishDeadLetter(msg, e);
         observer.onDeadLettered(listener.getSubject(), listener.getStream());
       }
+      msg.term();
+      observer.onTerminated(listener.getSubject(), listener.getStream(), e);
       return;
     }
 
@@ -88,9 +91,9 @@ final class JetStreamInvocation implements Consumer<Message> {
       log.error("Failed to invoke handler for NATS JetStream listener {}", listener.getMethod(), e);
       if (listener.getAckMode() == AckMode.AUTO) {
         if (isLastDelivery(msg)) {
-          msg.term();
           publishDeadLetter(msg, e);
           observer.onDeadLettered(listener.getSubject(), listener.getStream());
+          msg.term();
         } else {
           msg.nak();
           observer.onNacked(listener.getSubject(), listener.getStream());
@@ -108,56 +111,14 @@ final class JetStreamInvocation implements Consumer<Message> {
   }
 
   private void publishDeadLetter(Message msg, @Nullable Exception cause) {
-    try {
-      Headers dlqHeaders = buildDeadLetterHeaders(msg, cause);
-      byte[] body = msg.getData() != null ? msg.getData() : new byte[0];
-      Message dlqMsg =
-          NatsMessage.builder()
-              .subject(listener.getDeadLetterSubject())
-              .headers(dlqHeaders)
-              .data(body)
-              .build();
-      connection.publish(dlqMsg);
-    } catch (Exception e) {
-      log.error(
-          "Failed to publish dead-letter message to subject {}",
-          listener.getDeadLetterSubject(),
-          e);
-    }
-  }
-
-  private Headers buildDeadLetterHeaders(Message msg, @Nullable Exception cause) {
-    Headers headers = new Headers();
-    Headers origHeaders = msg.getHeaders();
-    if (origHeaders != null) {
-      for (String key : origHeaders.keySet()) {
-        List<String> values = origHeaders.get(key);
-        if (values != null && !values.isEmpty()) {
-          headers.add(key, values);
-        }
-      }
-    }
-    headers.add("X-Dead-Letter-Subject", listener.getSubject());
+    Headers headers = buildDeadLetterHeaders(msg, msg.getSubject(), cause);
     headers.add("X-Dead-Letter-Stream", listener.getStream());
-    headers.add("X-Dead-Letter-Consumer", listener.getDurable());
+    headers.add("X-Dead-Letter-Durable", listener.getDurable());
     NatsJetStreamMetaData meta = msg.metaData();
     if (meta != null) {
       headers.add("X-Dead-Letter-Delivery", String.valueOf(meta.deliveredCount()));
     }
-    if (cause != null) {
-      Throwable root = cause instanceof InvocationTargetException ite ? ite.getCause() : cause;
-      String message = root != null ? root.getMessage() : null;
-      String reason =
-          (root != null ? root.getClass().getSimpleName() : cause.getClass().getSimpleName())
-              + (message != null ? ": " + truncate(message, 200) : "");
-      headers.add("X-Dead-Letter-Reason", reason);
-    }
-    headers.add("X-Dead-Letter-Timestamp", Instant.now().toString());
-    return headers;
-  }
-
-  private String truncate(String reason, int maxLength) {
-    return reason.length() <= maxLength ? reason : reason.substring(0, maxLength) + "...";
+    buildAndPublishDeadLetter(connection, listener.getDeadLetterSubject(), msg, headers);
   }
 
   private void logResolutionException(Message msg, Exception e) {

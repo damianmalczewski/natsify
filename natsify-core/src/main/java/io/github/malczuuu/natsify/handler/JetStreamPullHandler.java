@@ -39,8 +39,10 @@ final class JetStreamPullHandler implements JetStreamHandler {
   private final JetStreamListenerDetails listener;
   private final ConsumerConfiguration configuration;
   private final Consumer<Message> messageConsumer;
+  private final int fetchBatchSize;
+  private final Duration fetchTimeout;
 
-  private boolean running = false;
+  private volatile boolean running = false;
   private @Nullable JetStreamSubscription subscription = null;
   private @Nullable Thread listenerThread = null;
 
@@ -48,11 +50,15 @@ final class JetStreamPullHandler implements JetStreamHandler {
       JetStream stream,
       JetStreamListenerDetails listener,
       ConsumerConfiguration configuration,
-      Consumer<Message> messageConsumer) {
+      Consumer<Message> messageConsumer,
+      int fetchBatchSize,
+      Duration fetchTimeout) {
     this.stream = stream;
     this.listener = listener;
     this.configuration = configuration;
     this.messageConsumer = messageConsumer;
+    this.fetchBatchSize = fetchBatchSize;
+    this.fetchTimeout = fetchTimeout;
   }
 
   @Override
@@ -62,7 +68,6 @@ final class JetStreamPullHandler implements JetStreamHandler {
           "Attempted to call start() on already started "
               + JetStreamPullHandler.class.getSimpleName());
     }
-    running = true;
 
     PullSubscribeOptions.Builder builder =
         PullSubscribeOptions.builder().configuration(configuration);
@@ -72,7 +77,9 @@ final class JetStreamPullHandler implements JetStreamHandler {
     subscription = stream.subscribe(listener.getSubject(), builder.build());
     listenerThread = new Thread(this::runPollPool, "nats-pull-" + listener.getSubject());
     listenerThread.setDaemon(true);
+    running = true;
     listenerThread.start();
+
     log.info("Subscribed pull JetStream listener to subject {}", listener.getSubject());
   }
 
@@ -104,7 +111,7 @@ final class JetStreamPullHandler implements JetStreamHandler {
     }
     while (running && !Thread.currentThread().isInterrupted()) {
       try {
-        List<Message> messages = sub.fetch(10, Duration.ofSeconds(1));
+        List<Message> messages = sub.fetch(fetchBatchSize, fetchTimeout);
         for (Message msg : messages) {
           messageConsumer.accept(msg);
         }

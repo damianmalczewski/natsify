@@ -58,6 +58,17 @@ public class NatsProperties {
   private final boolean autoStreamCreation;
 
   /**
+   * Number of messages fetched per poll cycle for JetStream pull consumers. Default: {@code 200}.
+   */
+  private final int pullFetchBatchSize;
+
+  /**
+   * Maximum time to wait for messages in each fetch call for JetStream pull consumers. Default:
+   * {@code 200ms}.
+   */
+  private final Duration pullFetchTimeout;
+
+  /**
    * Creates a new {@code NatsProperties} instance. Intended for use by the Spring Boot
    * configuration binding mechanism; prefer injecting the bound bean over constructing directly.
    *
@@ -69,6 +80,8 @@ public class NatsProperties {
    * @param connectionTimeout optional maximum time to wait when establishing a connection
    * @param socketWriteTimeout optional maximum time to wait for a socket write to complete
    * @param autoStreamCreation whether JetStream streams should be created or updated on startup
+   * @param pullFetchBatchSize number of messages to fetch per poll cycle for pull consumers
+   * @param pullFetchTimeout maximum time to wait for messages in each fetch call for pull consumers
    */
   public NatsProperties(
       @DefaultValue("true") boolean enabled,
@@ -78,7 +91,9 @@ public class NatsProperties {
       @Nullable String connectionName,
       @Nullable Duration connectionTimeout,
       @Nullable Duration socketWriteTimeout,
-      @DefaultValue("false") boolean autoStreamCreation) {
+      @DefaultValue("false") boolean autoStreamCreation,
+      @DefaultValue("200") int pullFetchBatchSize,
+      @DefaultValue("200ms") Duration pullFetchTimeout) {
     this.enabled = enabled;
     this.server = server;
     this.username = username;
@@ -89,6 +104,8 @@ public class NatsProperties {
     this.socketWriteTimeout =
         socketWriteTimeout != null ? socketWriteTimeout : Options.DEFAULT_SOCKET_WRITE_TIMEOUT;
     this.autoStreamCreation = autoStreamCreation;
+    this.pullFetchBatchSize = pullFetchBatchSize;
+    this.pullFetchTimeout = pullFetchTimeout;
   }
 
   /**
@@ -163,5 +180,23 @@ public class NatsProperties {
    */
   public boolean isAutoStreamCreation() {
     return autoStreamCreation;
+  }
+
+  /**
+   * Returns the number of messages to fetch per poll cycle for JetStream pull consumers.
+   *
+   * @return the pull fetch batch size
+   */
+  public int getPullFetchBatchSize() {
+    return pullFetchBatchSize;
+  }
+
+  /**
+   * Returns the maximum time to wait for messages in each fetch call for JetStream pull consumers.
+   *
+   * @return the pull fetch timeout
+   */
+  public Duration getPullFetchTimeout() {
+    return pullFetchTimeout;
   }
 }

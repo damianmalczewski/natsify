@@ -239,4 +239,27 @@ class NatsListenerTests extends AbstractIntegrationTests {
     assertThat(received).isNotNull();
     assertThat(received.getFirst("X-Type")).isEqualTo("object-header-value");
   }
+
+  @Test
+  void givenDlqConfigured_whenHandlerAlwaysFails_thenMessageDeadLettered() throws Exception {
+    Headers sourceHeaders = new Headers();
+    sourceHeaders.add("X-Trace-Id", "trace-abc-123");
+    sourceHeaders.add("X-Source-System", "order-service");
+
+    natsOperations.publish("combo.dlq-source", sourceHeaders, "dlq test payload");
+
+    Message dlqMessage = handler.deadLetterMessages.poll(5, TimeUnit.SECONDS);
+    assertThat(dlqMessage).isNotNull();
+    assertThat(new String(dlqMessage.getData(), StandardCharsets.UTF_8))
+        .isEqualTo("dlq test payload");
+    assertThat(dlqMessage.getHeaders().getFirst("X-Trace-Id")).isEqualTo("trace-abc-123");
+    assertThat(dlqMessage.getHeaders().getFirst("X-Source-System")).isEqualTo("order-service");
+    assertThat(dlqMessage.getHeaders().getFirst("X-Dead-Letter-Subject"))
+        .isEqualTo("combo.dlq-source");
+    assertThat(dlqMessage.getHeaders().getFirst("X-Dead-Letter-Reason"))
+        .contains("RuntimeException");
+    assertThat(dlqMessage.getHeaders().getFirst("X-Dead-Letter-Exception"))
+        .isEqualTo(RuntimeException.class.getName());
+    assertThat(dlqMessage.getHeaders().getFirst("X-Dead-Letter-Timestamp")).isNotNull();
+  }
 }

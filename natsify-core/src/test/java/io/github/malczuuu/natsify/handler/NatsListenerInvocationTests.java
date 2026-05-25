@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.github.malczuuu.natsify.instrument.NatsListenerObserver;
+import io.nats.client.Connection;
 import io.nats.client.Message;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,7 @@ class NatsListenerInvocationTests {
   MessageArgumentResolver argumentResolver;
   Message message;
   NatsListenerObserver observer;
+  Connection connection;
 
   private Listener listener;
 
@@ -44,6 +46,7 @@ class NatsListenerInvocationTests {
     argumentResolver = Mockito.mock(MessageArgumentResolver.class);
     message = Mockito.mock(Message.class);
     observer = Mockito.mock(NatsListenerObserver.class);
+    connection = Mockito.mock(Connection.class);
     listener = new Listener();
   }
 
@@ -51,7 +54,8 @@ class NatsListenerInvocationTests {
   void whenHandlerSucceeds_thenCallsOnSucceeded() {
     when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
 
-    new NatsListenerInvocation(handle("handle"), argumentResolver, observer).accept(message);
+    new NatsListenerInvocation(handle("handle"), argumentResolver, observer, connection)
+        .accept(message);
 
     verify(observer).onSucceeded("test-subject", "");
     verify(observer, never()).onFailed(any(), any());
@@ -62,7 +66,8 @@ class NatsListenerInvocationTests {
   void whenHandlerSucceeds_thenCallsOnReceivedAndOnProcessed() {
     when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
 
-    new NatsListenerInvocation(handle("handle"), argumentResolver, observer).accept(message);
+    new NatsListenerInvocation(handle("handle"), argumentResolver, observer, connection)
+        .accept(message);
 
     verify(observer).onReceived("test-subject", "");
     verify(observer).onProcessed(eq("test-subject"), eq(""), anyLong());
@@ -72,7 +77,7 @@ class NatsListenerInvocationTests {
   void whenHandlerThrows_thenCallsOnFailed() {
     when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
 
-    new NatsListenerInvocation(handle("handleThrowing"), argumentResolver, observer)
+    new NatsListenerInvocation(handle("handleThrowing"), argumentResolver, observer, connection)
         .accept(message);
 
     verify(observer).onFailed("test-subject", "");
@@ -83,7 +88,7 @@ class NatsListenerInvocationTests {
   void whenHandlerThrows_thenOnProcessedStillFires() {
     when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
 
-    new NatsListenerInvocation(handle("handleThrowing"), argumentResolver, observer)
+    new NatsListenerInvocation(handle("handleThrowing"), argumentResolver, observer, connection)
         .accept(message);
 
     verify(observer).onReceived("test-subject", "");
@@ -95,7 +100,8 @@ class NatsListenerInvocationTests {
     when(argumentResolver.resolveArguments(any(), any()))
         .thenThrow(new RuntimeException("bad payload"));
 
-    new NatsListenerInvocation(handle("handle"), argumentResolver, observer).accept(message);
+    new NatsListenerInvocation(handle("handle"), argumentResolver, observer, connection)
+        .accept(message);
 
     verify(observer).onFailed("test-subject", "");
     verify(observer, never()).onSucceeded(any(), any());
@@ -107,7 +113,8 @@ class NatsListenerInvocationTests {
     when(argumentResolver.resolveArguments(any(), any()))
         .thenThrow(new RuntimeException("bad payload"));
 
-    new NatsListenerInvocation(handle("handle"), argumentResolver, observer).accept(message);
+    new NatsListenerInvocation(handle("handle"), argumentResolver, observer, connection)
+        .accept(message);
 
     verify(observer).onReceived("test-subject", "");
     verify(observer).onProcessed(eq("test-subject"), eq(""), anyLong());
@@ -117,7 +124,8 @@ class NatsListenerInvocationTests {
   void givenQueueGroup_whenHandlerSucceeds_thenObserverReceivesQueue() {
     when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
 
-    new NatsListenerInvocation(handleWithQueue("handle", "my-queue"), argumentResolver, observer)
+    new NatsListenerInvocation(
+            handleWithQueue("handle", "my-queue"), argumentResolver, observer, connection)
         .accept(message);
 
     verify(observer).onReceived("test-subject", "my-queue");
@@ -125,11 +133,62 @@ class NatsListenerInvocationTests {
     verify(observer).onProcessed(eq("test-subject"), eq("my-queue"), anyLong());
   }
 
+  @Test
+  void givenDeadLetterSubject_whenHandlerThrows_thenPublishesToDeadLetterAndCallsOnDeadLettered() {
+    when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
+
+    new NatsListenerInvocation(
+            handleWithDeadLetter("handleThrowing", "test-subject.dlq"),
+            argumentResolver,
+            observer,
+            connection)
+        .accept(message);
+
+    verify(connection).publish(any(Message.class));
+    verify(observer).onDeadLettered("test-subject", "");
+  }
+
+  @Test
+  void givenDeadLetterSubject_whenResolverThrows_thenPublishesToDeadLetterAndCallsOnDeadLettered() {
+    when(argumentResolver.resolveArguments(any(), any()))
+        .thenThrow(new RuntimeException("bad payload"));
+
+    new NatsListenerInvocation(
+            handleWithDeadLetter("handle", "test-subject.dlq"),
+            argumentResolver,
+            observer,
+            connection)
+        .accept(message);
+
+    verify(connection).publish(any(Message.class));
+    verify(observer).onDeadLettered("test-subject", "");
+  }
+
+  @Test
+  void givenNoDeadLetterSubject_whenHandlerThrows_thenDoesNotPublish() {
+    when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
+
+    new NatsListenerInvocation(handle("handleThrowing"), argumentResolver, observer, connection)
+        .accept(message);
+
+    verify(connection, never()).publish(any(Message.class));
+    verify(observer, never()).onDeadLettered(any(), any());
+  }
+
   private NatsListenerDetails handle(String methodName) {
     return handleWithQueue(methodName, "");
   }
 
   private NatsListenerDetails handleWithQueue(String methodName, String queue) {
+    return handleWithQueueAndDeadLetter(methodName, queue, "");
+  }
+
+  private NatsListenerDetails handleWithDeadLetter(String methodName, String deadLetterSubject) {
+    return handleWithQueueAndDeadLetter(methodName, "", deadLetterSubject);
+  }
+
+  private NatsListenerDetails handleWithQueueAndDeadLetter(
+      String methodName, String queue, String deadLetterSubject) {
     try {
       Method method = Listener.class.getDeclaredMethod(methodName);
       method.setAccessible(true);
@@ -138,6 +197,7 @@ class NatsListenerInvocationTests {
           .withMethod(method)
           .withSubject("test-subject")
           .withQueue(queue)
+          .withDeadLetterSubject(deadLetterSubject)
           .build();
     } catch (NoSuchMethodException e) {
       throw new RuntimeException(e);

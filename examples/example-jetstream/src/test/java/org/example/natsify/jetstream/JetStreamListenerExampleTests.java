@@ -38,7 +38,7 @@ import org.testcontainers.junit.jupiter.Container;
 class JetStreamListenerExampleTests {
 
   @Container @ServiceConnection
-  static final NatsContainer natsContainer = new NatsContainer("nats:2.14.0").withJetStream();
+  public static final NatsContainer nats = new NatsContainer("nats:2.14.0").withJetStream();
 
   @Autowired JetStreamListenerExample application;
   @Autowired NatsOperations natsOperations;

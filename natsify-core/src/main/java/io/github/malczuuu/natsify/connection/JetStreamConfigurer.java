@@ -76,15 +76,15 @@ public final class JetStreamConfigurer implements JetStreamManager {
    */
   @Override
   public void start() {
-    running = true;
-
     if (!enabled) {
       log.info("Auto-creation of NATS JetStream streams is disabled, skipping");
+      running = true;
       return;
     }
 
     if (streamConfigurations.isEmpty()) {
       log.info("No NATS stream configurations found, skipping JetStream stream auto-creation");
+      running = true;
       return;
     }
 
@@ -121,6 +121,7 @@ public final class JetStreamConfigurer implements JetStreamManager {
       }
       throw new StreamConfigureException("Failed to configure JetStream streams", e);
     }
+    running = true;
   }
 
   /** Marks this manager as stopped. */

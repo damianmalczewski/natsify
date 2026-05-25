@@ -16,6 +16,8 @@
 
 package io.github.malczuuu.natsify.handler;
 
+import static io.github.malczuuu.natsify.handler.ListenerMethodValidation.validateJetStreamListenerMethod;
+import static io.github.malczuuu.natsify.handler.ListenerMethodValidation.validateNatsListenerMethod;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -55,6 +57,12 @@ class ListenerMethodValidationTests {
   static void invalidNatsHeaderWrongType(@NatsHeader("X-Type") int h) {}
 
   @SuppressWarnings("unused")
+  static void invalidNatsHeaderListOfInteger(@NatsHeader("X-Type") List<Integer> h) {}
+
+  @SuppressWarnings({"unused", "rawtypes"})
+  static void invalidNatsHeaderRawList(@NatsHeader("X-Type") List h) {}
+
+  @SuppressWarnings("unused")
   static void invalidNatsSubjectWrongType(@NatsSubject int subject) {}
 
   @SuppressWarnings("unused")
@@ -76,53 +84,41 @@ class ListenerMethodValidationTests {
 
   @Test
   void givenNoParams_whenValidate_thenNoException() {
-    assertThatCode(
-            () -> ListenerMethodValidation.validateJetStreamListener(method("validNoParams")))
+    assertThatCode(() -> validateJetStreamListenerMethod(method("validNoParams")))
         .doesNotThrowAnyException();
   }
 
   @Test
   void givenNatsHeaderStringParam_whenValidate_thenNoException() {
     assertThatCode(
-            () ->
-                ListenerMethodValidation.validateJetStreamListener(
-                    method("validNatsHeaderString", String.class)))
+            () -> validateJetStreamListenerMethod(method("validNatsHeaderString", String.class)))
         .doesNotThrowAnyException();
   }
 
   @Test
   void givenNatsHeaderListParam_whenValidate_thenNoException() {
-    assertThatCode(
-            () ->
-                ListenerMethodValidation.validateJetStreamListener(
-                    method("validNatsHeaderList", List.class)))
+    assertThatCode(() -> validateJetStreamListenerMethod(method("validNatsHeaderList", List.class)))
         .doesNotThrowAnyException();
   }
 
   @Test
   void givenNatsHeaderArrayParam_whenValidate_thenNoException() {
     assertThatCode(
-            () ->
-                ListenerMethodValidation.validateJetStreamListener(
-                    method("validNatsHeaderArray", String[].class)))
+            () -> validateJetStreamListenerMethod(method("validNatsHeaderArray", String[].class)))
         .doesNotThrowAnyException();
   }
 
   @Test
   void givenNatsSubjectStringParam_whenValidate_thenNoException() {
     assertThatCode(
-            () ->
-                ListenerMethodValidation.validateJetStreamListener(
-                    method("validNatsSubjectString", String.class)))
+            () -> validateJetStreamListenerMethod(method("validNatsSubjectString", String.class)))
         .doesNotThrowAnyException();
   }
 
   @Test
   void givenNatsHeadersTypeParam_whenValidate_thenNoException() {
     assertThatCode(
-            () ->
-                ListenerMethodValidation.validateJetStreamListener(
-                    method("validNatsHeadersType", Headers.class)))
+            () -> validateJetStreamListenerMethod(method("validNatsHeadersType", Headers.class)))
         .doesNotThrowAnyException();
   }
 
@@ -130,7 +126,7 @@ class ListenerMethodValidationTests {
   void givenMetaDataParamInJetStreamListener_whenValidate_thenNoException() {
     assertThatCode(
             () ->
-                ListenerMethodValidation.validateJetStreamListener(
+                validateJetStreamListenerMethod(
                     method("validJetStreamMetaData", NatsJetStreamMetaData.class)))
         .doesNotThrowAnyException();
   }
@@ -139,7 +135,7 @@ class ListenerMethodValidationTests {
   void givenMetaDataParamInNatsListener_whenValidate_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
             () ->
-                ListenerMethodValidation.validateNatsListener(
+                validateNatsListenerMethod(
                     method("invalidNatsListenerMetaData", NatsJetStreamMetaData.class)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
@@ -150,8 +146,7 @@ class ListenerMethodValidationTests {
   void givenNatsHeaderWithEmptyName_whenValidate_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
             () ->
-                ListenerMethodValidation.validateJetStreamListener(
-                    method("invalidNatsHeaderEmptyName", String.class)))
+                validateJetStreamListenerMethod(method("invalidNatsHeaderEmptyName", String.class)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("@NatsHeader requires a non-empty name");
   }
@@ -159,19 +154,33 @@ class ListenerMethodValidationTests {
   @Test
   void givenNatsHeaderWithWrongType_whenValidate_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
-            () ->
-                ListenerMethodValidation.validateJetStreamListener(
-                    method("invalidNatsHeaderWrongType", int.class)))
+            () -> validateJetStreamListenerMethod(method("invalidNatsHeaderWrongType", int.class)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("@NatsHeader parameter must be String, String[], or List<String>");
   }
 
   @Test
-  void givenNatsSubjectWithWrongType_whenValidate_thenThrowsIllegalArgumentException() {
+  void givenNatsHeaderListOfInteger_whenValidate_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
             () ->
-                ListenerMethodValidation.validateJetStreamListener(
-                    method("invalidNatsSubjectWrongType", int.class)))
+                validateJetStreamListenerMethod(
+                    method("invalidNatsHeaderListOfInteger", List.class)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("@NatsHeader List parameter must be List<String>");
+  }
+
+  @Test
+  void givenNatsHeaderRawList_whenValidate_thenThrowsIllegalArgumentException() {
+    assertThatThrownBy(
+            () -> validateJetStreamListenerMethod(method("invalidNatsHeaderRawList", List.class)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("@NatsHeader List parameter must be List<String>");
+  }
+
+  @Test
+  void givenNatsSubjectWithWrongType_whenValidate_thenThrowsIllegalArgumentException() {
+    assertThatThrownBy(
+            () -> validateJetStreamListenerMethod(method("invalidNatsSubjectWrongType", int.class)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("@NatsSubject parameter must be String");
   }
@@ -180,7 +189,7 @@ class ListenerMethodValidationTests {
   void givenNatsHeadersWithWrongType_whenValidate_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
             () ->
-                ListenerMethodValidation.validateJetStreamListener(
+                validateJetStreamListenerMethod(
                     method("invalidNatsHeadersWrongType", String.class)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("@NatsHeaders parameter must be assignable from Headers");

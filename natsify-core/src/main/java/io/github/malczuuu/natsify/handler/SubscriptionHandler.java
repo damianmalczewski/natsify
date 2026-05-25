@@ -50,7 +50,6 @@ final class SubscriptionHandler implements NatsListenerHandler {
           "Attempted to call start() on already running "
               + SubscriptionHandler.class.getSimpleName());
     }
-    running = true;
 
     dispatcher = connection.createDispatcher(messageConsumer::accept);
     if (listener.getQueue().isEmpty()) {
@@ -61,6 +60,7 @@ final class SubscriptionHandler implements NatsListenerHandler {
       log.info(
           "Subscribed to NATS subject {}, queue {}", listener.getSubject(), listener.getQueue());
     }
+    running = true;
   }
 
   @Override

@@ -23,15 +23,17 @@ import io.nats.client.impl.Headers;
 import io.nats.client.impl.NatsJetStreamMetaData;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.List;
 
 final class ListenerMethodValidation {
 
-  static void validateNatsListener(Method method) {
+  static void validateNatsListenerMethod(Method method) {
     validate(method, false);
   }
 
-  static void validateJetStreamListener(Method method) {
+  static void validateJetStreamListenerMethod(Method method) {
     validate(method, true);
   }
 
@@ -45,54 +47,85 @@ final class ListenerMethodValidation {
   private static void validateParameter(
       Method method, Parameter param, int index, boolean jetStream) {
     if (!jetStream && NatsJetStreamMetaData.class.isAssignableFrom(param.getType())) {
-      throw new IllegalArgumentException(
-          "Parameter "
-              + index
-              + " of "
-              + method.toGenericString()
-              + ": NatsJetStreamMetaData is only allowed in @JetStreamListener methods");
+      throw new IllegalArgumentException(jetStreamMetaDataNotAllowed(method, index));
     }
     NatsHeader natsHeader = param.getAnnotation(NatsHeader.class);
     if (natsHeader != null) {
       String name = natsHeader.value().isEmpty() ? natsHeader.name() : natsHeader.value();
       if (name.isEmpty()) {
-        throw new IllegalArgumentException(
-            "Parameter "
-                + index
-                + " of "
-                + method.toGenericString()
-                + ": @NatsHeader requires a non-empty name");
+        throw new IllegalArgumentException(natsHeaderRequiresName(method, index));
       }
       Class<?> type = param.getType();
-      if (type != String.class && type != String[].class && !List.class.isAssignableFrom(type)) {
-        throw new IllegalArgumentException(
-            "Parameter "
-                + index
-                + " of "
-                + method.toGenericString()
-                + ": @NatsHeader parameter must be String, String[], or List<String>");
+      if (type == String.class || type == String[].class) {
+        // valid
+      } else if (List.class.isAssignableFrom(type)) {
+        Type genericType = param.getParameterizedType();
+        if (!(genericType instanceof ParameterizedType paramType)
+            || paramType.getActualTypeArguments()[0] != String.class) {
+          throw new IllegalArgumentException(natsHeaderListMustBeStringList(method, index));
+        }
+      } else {
+        throw new IllegalArgumentException(natsHeaderUnsupportedType(method, index));
       }
     }
     if (param.isAnnotationPresent(NatsSubject.class)) {
       if (param.getType() != String.class) {
-        throw new IllegalArgumentException(
-            "Parameter "
-                + index
-                + " of "
-                + method.toGenericString()
-                + ": @NatsSubject parameter must be String");
+        throw new IllegalArgumentException(natsSubjectMustBeString(method, index));
       }
     }
     if (param.isAnnotationPresent(NatsHeaders.class)) {
       if (!Headers.class.isAssignableFrom(param.getType())) {
-        throw new IllegalArgumentException(
-            "Parameter "
-                + index
-                + " of "
-                + method.toGenericString()
-                + ": @NatsHeaders parameter must be assignable from Headers");
+        throw new IllegalArgumentException(natsHeadersMustBeAssignableFromHeaders(method, index));
       }
     }
+  }
+
+  private static String jetStreamMetaDataNotAllowed(Method method, int index) {
+    return "Parameter "
+        + index
+        + " of "
+        + method.toGenericString()
+        + ": NatsJetStreamMetaData is only allowed in @JetStreamListener methods";
+  }
+
+  private static String natsHeaderRequiresName(Method method, int index) {
+    return "Parameter "
+        + index
+        + " of "
+        + method.toGenericString()
+        + ": @NatsHeader requires a non-empty name";
+  }
+
+  private static String natsHeaderListMustBeStringList(Method method, int index) {
+    return "Parameter "
+        + index
+        + " of "
+        + method.toGenericString()
+        + ": @NatsHeader List parameter must be List<String>";
+  }
+
+  private static String natsHeaderUnsupportedType(Method method, int index) {
+    return "Parameter "
+        + index
+        + " of "
+        + method.toGenericString()
+        + ": @NatsHeader parameter must be String, String[], or List<String>";
+  }
+
+  private static String natsSubjectMustBeString(Method method, int index) {
+    return "Parameter "
+        + index
+        + " of "
+        + method.toGenericString()
+        + ": @NatsSubject parameter must be String";
+  }
+
+  private static String natsHeadersMustBeAssignableFromHeaders(Method method, int index) {
+    return "Parameter "
+        + index
+        + " of "
+        + method.toGenericString()
+        + ": @NatsHeaders parameter must be assignable from Headers";
   }
 
   private ListenerMethodValidation() {}

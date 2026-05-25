@@ -53,6 +53,14 @@ public interface NatsListenerObserver {
   void onFailed(String subject, String queue);
 
   /**
+   * Called when a message is dead-lettered after a failure.
+   *
+   * @param subject the NATS subject
+   * @param queue the queue group name, or empty string if not in a queue group
+   */
+  void onDeadLettered(String subject, String queue);
+
+  /**
    * Called after every invocation (success or failure) with the total processing duration.
    *
    * @param subject the NATS subject

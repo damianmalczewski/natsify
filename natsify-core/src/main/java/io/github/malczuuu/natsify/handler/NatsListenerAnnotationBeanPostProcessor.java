@@ -88,6 +88,7 @@ public class NatsListenerAnnotationBeanPostProcessor
       NatsListener annotation = entry.getValue();
       String subject = resolve(annotation.subject());
       String queue = resolve(annotation.queue());
+      String deadLetterSubject = resolve(annotation.deadLetterSubject());
 
       NatsListenerDetails listener =
           NatsListenerDetails.builder()
@@ -95,6 +96,7 @@ public class NatsListenerAnnotationBeanPostProcessor
               .withMethod(method)
               .withSubject(subject)
               .withQueue(queue)
+              .withDeadLetterSubject(deadLetterSubject)
               .build();
 
       natsListenerRegistry.register(listener);

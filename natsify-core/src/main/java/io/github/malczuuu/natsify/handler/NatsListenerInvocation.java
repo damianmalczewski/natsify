@@ -16,8 +16,13 @@
 
 package io.github.malczuuu.natsify.handler;
 
+import static io.github.malczuuu.natsify.handler.DeadLetterSupport.buildAndPublishDeadLetter;
+import static io.github.malczuuu.natsify.handler.DeadLetterSupport.buildDeadLetterHeaders;
+
 import io.github.malczuuu.natsify.instrument.NatsListenerObserver;
+import io.nats.client.Connection;
 import io.nats.client.Message;
+import io.nats.client.impl.Headers;
 import java.lang.reflect.InvocationTargetException;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
@@ -31,14 +36,17 @@ final class NatsListenerInvocation implements Consumer<Message> {
   private final NatsListenerDetails listener;
   private final MessageArgumentResolver argumentResolver;
   private final NatsListenerObserver observer;
+  private final Connection connection;
 
   NatsListenerInvocation(
       NatsListenerDetails listener,
       MessageArgumentResolver argumentResolver,
-      NatsListenerObserver observer) {
+      NatsListenerObserver observer,
+      Connection connection) {
     this.listener = listener;
     this.argumentResolver = argumentResolver;
     this.observer = observer;
+    this.connection = connection;
   }
 
   @Override
@@ -64,6 +72,7 @@ final class NatsListenerInvocation implements Consumer<Message> {
           msg.getSubject(),
           e);
       observer.onFailed(listener.getSubject(), listener.getQueue());
+      publishDeadLetter(msg, e);
       return;
     }
 
@@ -73,6 +82,23 @@ final class NatsListenerInvocation implements Consumer<Message> {
     } catch (InvocationTargetException | IllegalAccessException e) {
       log.error("Failed to invoke handler for NATS listener {}", listener.getMethod(), e);
       observer.onFailed(listener.getSubject(), listener.getQueue());
+      publishDeadLetter(msg, e);
+    }
+  }
+
+  private void publishDeadLetter(Message msg, Exception cause) {
+    if (listener.getDeadLetterSubject().isEmpty()) {
+      return;
+    }
+    try {
+      Headers headers = buildDeadLetterHeaders(msg, msg.getSubject(), cause);
+      buildAndPublishDeadLetter(connection, listener.getDeadLetterSubject(), msg, headers);
+      observer.onDeadLettered(listener.getSubject(), listener.getQueue());
+    } catch (Exception e) {
+      log.error(
+          "Failed to publish dead-letter message to subject {}",
+          listener.getDeadLetterSubject(),
+          e);
     }
   }
 }

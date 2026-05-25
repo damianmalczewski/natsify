@@ -211,6 +211,8 @@ class JetStreamListenerTests extends AbstractIntegrationTests {
     assertThat(dlqMessage.getHeaders().getFirst("X-Dead-Letter-Stream")).isEqualTo("TEST");
     assertThat(dlqMessage.getHeaders().getFirst("X-Dead-Letter-Reason"))
         .contains("RuntimeException");
+    assertThat(dlqMessage.getHeaders().getFirst("X-Dead-Letter-Exception"))
+        .isEqualTo(RuntimeException.class.getName());
     assertThat(dlqMessage.getHeaders().getFirst("X-Dead-Letter-Timestamp")).isNotNull();
   }
 }
