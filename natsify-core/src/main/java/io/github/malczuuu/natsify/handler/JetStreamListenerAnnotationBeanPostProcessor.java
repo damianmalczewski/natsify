@@ -88,6 +88,7 @@ public class JetStreamListenerAnnotationBeanPostProcessor
       String stream = resolve(annotation.stream());
       String durable = resolve(annotation.durable());
       String queue = resolve(annotation.queue());
+      String deadLetterSubject = resolve(annotation.deadLetterSubject());
 
       JetStreamListenerDetails listener =
           JetStreamListenerDetails.builder()
@@ -100,6 +101,8 @@ public class JetStreamListenerAnnotationBeanPostProcessor
               .withConsumerType(annotation.consumerType())
               .withAckMode(annotation.ackMode())
               .withDeliverPolicy(annotation.deliverPolicy())
+              .withDeadLetterSubject(deadLetterSubject)
+              .withMaxDeliveries(annotation.maxDeliveries())
               .build();
 
       jetStreamListenerRegistry.register(listener);

@@ -16,6 +16,7 @@
 
 package io.github.malczuuu.natsify.itest.infra;
 
+import io.github.malczuuu.natsify.annotation.AckMode;
 import io.github.malczuuu.natsify.annotation.ConsumerType;
 import io.github.malczuuu.natsify.annotation.JetStreamListener;
 import io.github.malczuuu.natsify.itest.model.SampleMessage;
@@ -40,6 +41,7 @@ public class JetStreamListenerComponent {
   public final BlockingQueue<SampleMessage[]> arrays = new LinkedBlockingQueue<>();
   public final BlockingQueue<Headers> headersValuesByType = new LinkedBlockingQueue<>();
   public final BlockingQueue<NatsJetStreamMetaData> metaDataValues = new LinkedBlockingQueue<>();
+  public final BlockingQueue<Message> deadLetterMessages = new LinkedBlockingQueue<>();
 
   @JetStreamListener(
       subject = "js.string",
@@ -120,6 +122,27 @@ public class JetStreamListenerComponent {
     metaDataValues.add(metaData);
   }
 
+  @JetStreamListener(
+      subject = "js.dlq-source",
+      stream = "TEST",
+      durable = "dlq-source-consumer",
+      consumerType = ConsumerType.PUSH,
+      ackMode = AckMode.AUTO,
+      deadLetterSubject = "js.dead-letter",
+      maxDeliveries = 1)
+  public void handleDlqSource(String data) {
+    throw new RuntimeException("simulated failure for dlq test");
+  }
+
+  @JetStreamListener(
+      subject = "js.dead-letter",
+      stream = "TEST",
+      durable = "dead-letter-consumer",
+      consumerType = ConsumerType.PUSH)
+  public void handleDeadLetter(Message msg) {
+    deadLetterMessages.add(msg);
+  }
+
   public void clearAll() {
     strings.clear();
     bytes.clear();
@@ -131,5 +154,6 @@ public class JetStreamListenerComponent {
     arrays.clear();
     headersValuesByType.clear();
     metaDataValues.clear();
+    deadLetterMessages.clear();
   }
 }

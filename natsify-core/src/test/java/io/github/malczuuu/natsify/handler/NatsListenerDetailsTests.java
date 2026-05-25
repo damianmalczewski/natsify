@@ -52,7 +52,7 @@ class NatsListenerDetailsTests {
   }
 
   @Test
-  void givenMissingBean_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingBean_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
             () ->
                 NatsListenerDetails.builder()
@@ -60,12 +60,12 @@ class NatsListenerDetailsTests {
                     .withSubject("orders.placed")
                     .withQueue("processors")
                     .build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("bean is required");
   }
 
   @Test
-  void givenMissingMethod_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingMethod_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
             () ->
                 NatsListenerDetails.builder()
@@ -73,12 +73,12 @@ class NatsListenerDetailsTests {
                     .withSubject("orders.placed")
                     .withQueue("processors")
                     .build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("method is required");
   }
 
   @Test
-  void givenMissingSubject_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingSubject_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
             () ->
                 NatsListenerDetails.builder()
@@ -86,12 +86,12 @@ class NatsListenerDetailsTests {
                     .withMethod(METHOD)
                     .withQueue("processors")
                     .build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("subject is required");
   }
 
   @Test
-  void givenMissingQueue_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingQueue_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
             () ->
                 NatsListenerDetails.builder()
@@ -99,7 +99,7 @@ class NatsListenerDetailsTests {
                     .withMethod(METHOD)
                     .withSubject("orders.placed")
                     .build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("queue is required");
   }
 }

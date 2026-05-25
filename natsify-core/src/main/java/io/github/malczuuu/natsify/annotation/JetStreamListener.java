@@ -79,4 +79,23 @@ public @interface JetStreamListener {
    * @return the deliver policy
    */
   DeliverPolicyType deliverPolicy() default DeliverPolicyType.NEW;
+
+  /**
+   * Subject to publish failed messages to after {@link #maxDeliveries()} attempts. Empty string
+   * disables the dead-letter queue. Supports property placeholders (e.g., {@code ${my.dlq}}).
+   *
+   * <p>Requires {@link #maxDeliveries()} to be positive. Not compatible with {@link
+   * AckMode#MANUAL}.
+   *
+   * @return the dead-letter subject
+   */
+  String deadLetterSubject() default "";
+
+  /**
+   * Maximum number of delivery attempts before the message is dead-lettered. {@code -1} means
+   * unlimited. When positive, sets the JetStream consumer {@code maxDeliver} configuration.
+   *
+   * @return the max delivery count
+   */
+  int maxDeliveries() default -1;
 }

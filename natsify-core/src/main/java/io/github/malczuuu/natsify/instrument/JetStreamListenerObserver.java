@@ -64,6 +64,14 @@ public interface JetStreamListenerObserver {
   void onTerminated(String subject, String stream, @Nullable Exception e);
 
   /**
+   * Called when a message is dead-lettered after exhausting delivery attempts.
+   *
+   * @param subject the message subject
+   * @param stream the JetStream stream name
+   */
+  void onDeadLettered(String subject, String stream);
+
+  /**
    * Called after every invocation with the total processing duration.
    *
    * @param subject the message subject

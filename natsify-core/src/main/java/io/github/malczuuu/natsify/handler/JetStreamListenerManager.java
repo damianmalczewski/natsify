@@ -74,7 +74,7 @@ public class JetStreamListenerManager implements ListenerManager {
       if (listener.getConsumerType() == ConsumerType.PUSH) {
         handler = createPushHandler(connection, listener, stream, configuration);
       } else {
-        handler = createPullHandler(listener, stream, configuration);
+        handler = createPullHandler(connection, listener, stream, configuration);
       }
       handlers.add(handler);
       handler.start();
@@ -97,16 +97,19 @@ public class JetStreamListenerManager implements ListenerManager {
         stream,
         listener,
         configuration,
-        new JetStreamInvocation(listener, argumentResolver, observer));
+        new JetStreamInvocation(listener, argumentResolver, observer, connection));
   }
 
   private JetStreamPullHandler createPullHandler(
-      JetStreamListenerDetails listener, JetStream stream, ConsumerConfiguration configuration) {
+      Connection connection,
+      JetStreamListenerDetails listener,
+      JetStream stream,
+      ConsumerConfiguration configuration) {
     return new JetStreamPullHandler(
         stream,
         listener,
         configuration,
-        new JetStreamInvocation(listener, argumentResolver, observer));
+        new JetStreamInvocation(listener, argumentResolver, observer, connection));
   }
 
   private ConsumerConfiguration buildConsumerConfiguration(JetStreamListenerDetails listener) {
@@ -116,6 +119,9 @@ public class JetStreamListenerManager implements ListenerManager {
             .ackPolicy(AckPolicy.Explicit);
     if (!listener.getDurable().isEmpty()) {
       builder.durable(listener.getDurable());
+    }
+    if (listener.getMaxDeliveries() > 0) {
+      builder.maxDeliver(listener.getMaxDeliveries());
     }
     return builder.build();
   }

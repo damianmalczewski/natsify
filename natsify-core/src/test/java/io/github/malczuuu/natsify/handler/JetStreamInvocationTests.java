@@ -26,7 +26,9 @@ import io.github.malczuuu.natsify.annotation.AckMode;
 import io.github.malczuuu.natsify.annotation.ConsumerType;
 import io.github.malczuuu.natsify.annotation.DeliverPolicyType;
 import io.github.malczuuu.natsify.instrument.JetStreamListenerObserver;
+import io.nats.client.Connection;
 import io.nats.client.Message;
+import io.nats.client.impl.NatsJetStreamMetaData;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,7 @@ class JetStreamInvocationTests {
 
   MessageArgumentResolver argumentResolver;
   Message message;
+  Connection connection;
 
   private Listener listener;
 
@@ -43,6 +46,7 @@ class JetStreamInvocationTests {
   void setUp() {
     argumentResolver = Mockito.mock(MessageArgumentResolver.class);
     message = Mockito.mock(Message.class);
+    connection = Mockito.mock(Connection.class);
     listener = new Listener();
   }
 
@@ -50,9 +54,7 @@ class JetStreamInvocationTests {
   void givenAutoAckMode_whenHandlerSucceeds_thenAcks() {
     when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
 
-    new JetStreamInvocation(
-            listener("handle", AckMode.AUTO), argumentResolver, JetStreamListenerObserver.noop())
-        .accept(message);
+    invocation(listener("handle", AckMode.AUTO)).accept(message);
 
     verify(message).ack();
     verify(message, never()).nak();
@@ -63,9 +65,7 @@ class JetStreamInvocationTests {
   void givenManualAckMode_whenHandlerSucceeds_thenNoAckNorNak() {
     when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
 
-    new JetStreamInvocation(
-            listener("handle", AckMode.MANUAL), argumentResolver, JetStreamListenerObserver.noop())
-        .accept(message);
+    invocation(listener("handle", AckMode.MANUAL)).accept(message);
 
     verify(message, never()).ack();
     verify(message, never()).nak();
@@ -75,11 +75,7 @@ class JetStreamInvocationTests {
   void givenAutoAckMode_whenHandlerThrows_thenNaks() {
     when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
 
-    new JetStreamInvocation(
-            listener("handleThrowing", AckMode.AUTO),
-            argumentResolver,
-            JetStreamListenerObserver.noop())
-        .accept(message);
+    invocation(listener("handleThrowing", AckMode.AUTO)).accept(message);
 
     verify(message).nak();
     verify(message, never()).ack();
@@ -89,11 +85,7 @@ class JetStreamInvocationTests {
   void givenManualAckMode_whenHandlerThrows_thenNoNakNorAck() {
     when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
 
-    new JetStreamInvocation(
-            listener("handleThrowing", AckMode.MANUAL),
-            argumentResolver,
-            JetStreamListenerObserver.noop())
-        .accept(message);
+    invocation(listener("handleThrowing", AckMode.MANUAL)).accept(message);
 
     verify(message, never()).nak();
     verify(message, never()).ack();
@@ -104,13 +96,63 @@ class JetStreamInvocationTests {
     when(argumentResolver.resolveArguments(any(), any()))
         .thenThrow(new RuntimeException("bad payload"));
 
-    new JetStreamInvocation(
-            listener("handle", AckMode.AUTO), argumentResolver, JetStreamListenerObserver.noop())
-        .accept(message);
+    invocation(listener("handle", AckMode.AUTO)).accept(message);
 
     verify(message).term();
     verify(message, never()).ack();
     assertThat(listener.called).isFalse();
+  }
+
+  @Test
+  void givenDlqConfigured_whenHandlerThrowsOnLastDelivery_thenTermsAndPublishesToDlq() {
+    when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
+    NatsJetStreamMetaData meta = Mockito.mock(NatsJetStreamMetaData.class);
+    when(meta.deliveredCount()).thenReturn(3L);
+    when(message.metaData()).thenReturn(meta);
+
+    JetStreamListenerObserver observer = Mockito.mock(JetStreamListenerObserver.class);
+    invocation(listenerWithDlq("handleThrowing", "dlq.subject", 3), observer).accept(message);
+
+    verify(message).term();
+    verify(message, never()).nak();
+    verify(connection).publish(any(Message.class));
+    verify(observer).onDeadLettered("test-subject", "");
+  }
+
+  @Test
+  void givenDlqConfigured_whenHandlerThrowsBeforeLastDelivery_thenNaks() {
+    when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
+    NatsJetStreamMetaData meta = Mockito.mock(NatsJetStreamMetaData.class);
+    when(meta.deliveredCount()).thenReturn(2L);
+    when(message.metaData()).thenReturn(meta);
+
+    invocation(listenerWithDlq("handleThrowing", "dlq.subject", 3)).accept(message);
+
+    verify(message).nak();
+    verify(message, never()).term();
+    verify(connection, never()).publish(any(Message.class));
+  }
+
+  @Test
+  void givenDlqConfigured_whenResolverThrows_thenTermsAndPublishesToDlq() {
+    when(argumentResolver.resolveArguments(any(), any()))
+        .thenThrow(new RuntimeException("bad payload"));
+
+    JetStreamListenerObserver observer = Mockito.mock(JetStreamListenerObserver.class);
+    invocation(listenerWithDlq("handle", "dlq.subject", 3), observer).accept(message);
+
+    verify(message).term();
+    verify(connection).publish(any(Message.class));
+    verify(observer).onDeadLettered("test-subject", "");
+  }
+
+  private JetStreamInvocation invocation(JetStreamListenerDetails details) {
+    return invocation(details, JetStreamListenerObserver.noop());
+  }
+
+  private JetStreamInvocation invocation(
+      JetStreamListenerDetails details, JetStreamListenerObserver observer) {
+    return new JetStreamInvocation(details, argumentResolver, observer, connection);
   }
 
   private JetStreamListenerDetails listener(String methodName, AckMode ackMode) {
@@ -127,6 +169,29 @@ class JetStreamInvocationTests {
           .withConsumerType(ConsumerType.PUSH)
           .withAckMode(ackMode)
           .withDeliverPolicy(DeliverPolicyType.NEW)
+          .build();
+    } catch (NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private JetStreamListenerDetails listenerWithDlq(
+      String methodName, String dlqSubject, int maxDeliveries) {
+    try {
+      Method method = Listener.class.getDeclaredMethod(methodName);
+      method.setAccessible(true);
+      return JetStreamListenerDetails.builder()
+          .withBean(listener)
+          .withMethod(method)
+          .withSubject("test-subject")
+          .withStream("")
+          .withDurable("")
+          .withQueue("")
+          .withConsumerType(ConsumerType.PUSH)
+          .withAckMode(AckMode.AUTO)
+          .withDeliverPolicy(DeliverPolicyType.NEW)
+          .withDeadLetterSubject(dlqSubject)
+          .withMaxDeliveries(maxDeliveries)
           .build();
     } catch (NoSuchMethodException e) {
       throw new RuntimeException(e);

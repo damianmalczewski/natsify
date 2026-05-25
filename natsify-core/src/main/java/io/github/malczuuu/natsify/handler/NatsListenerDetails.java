@@ -155,13 +155,13 @@ public final class NatsListenerDetails {
      * Builds the {@link NatsListenerDetails} instance.
      *
      * @return a new {@link NatsListenerDetails}
-     * @throws IllegalStateException if any required field is null
+     * @throws IllegalArgumentException if configuration constraints are violated
      */
     public NatsListenerDetails build() {
-      if (bean == null) throw new IllegalStateException("bean is required");
-      if (method == null) throw new IllegalStateException("method is required");
-      if (subject == null) throw new IllegalStateException("subject is required");
-      if (queue == null) throw new IllegalStateException("queue is required");
+      if (bean == null) throw new IllegalArgumentException("bean is required");
+      if (method == null) throw new IllegalArgumentException("method is required");
+      if (subject == null) throw new IllegalArgumentException("subject is required");
+      if (queue == null) throw new IllegalArgumentException("queue is required");
       ListenerMethodValidator.validate(method);
       return new NatsListenerDetails(bean, method, subject, queue);
     }

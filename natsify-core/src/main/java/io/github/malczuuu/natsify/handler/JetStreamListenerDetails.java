@@ -27,7 +27,7 @@ import org.springframework.aop.support.AopUtils;
  * Holds metadata for a {@link
  * io.github.malczuuu.natsify.annotation.JetStreamListener @JetStreamListener}-annotated method,
  * including the target bean, method, subject, stream, durable consumer name, queue group, consumer
- * type, ack mode, and deliver policy.
+ * type, ack mode, deliver policy, and dead-letter configuration.
  */
 public final class JetStreamListenerDetails {
 
@@ -40,6 +40,8 @@ public final class JetStreamListenerDetails {
   private final ConsumerType consumerType;
   private final AckMode ackMode;
   private final DeliverPolicyType deliverPolicy;
+  private final String deadLetterSubject;
+  private final int maxDeliveries;
 
   private JetStreamListenerDetails(
       Object bean,
@@ -50,7 +52,9 @@ public final class JetStreamListenerDetails {
       String queue,
       ConsumerType consumerType,
       AckMode ackMode,
-      DeliverPolicyType deliverPolicy) {
+      DeliverPolicyType deliverPolicy,
+      String deadLetterSubject,
+      int maxDeliveries) {
     this.bean = bean;
     this.method = method;
     this.subject = subject;
@@ -60,6 +64,8 @@ public final class JetStreamListenerDetails {
     this.consumerType = consumerType;
     this.ackMode = ackMode;
     this.deliverPolicy = deliverPolicy;
+    this.deadLetterSubject = deadLetterSubject;
+    this.maxDeliveries = maxDeliveries;
   }
 
   /**
@@ -144,6 +150,26 @@ public final class JetStreamListenerDetails {
   }
 
   /**
+   * Returns the subject to publish messages to after exhausting delivery attempts, or an empty
+   * string if the dead-letter queue is disabled.
+   *
+   * @return the dead-letter subject
+   */
+  public String getDeadLetterSubject() {
+    return deadLetterSubject;
+  }
+
+  /**
+   * Returns the maximum number of delivery attempts before dead-lettering. {@code -1} means
+   * unlimited.
+   *
+   * @return the max delivery count
+   */
+  public int getMaxDeliveries() {
+    return maxDeliveries;
+  }
+
+  /**
    * Returns a string representation of this listener details.
    *
    * @return string representation
@@ -158,7 +184,9 @@ public final class JetStreamListenerDetails {
         + (", queue=" + queue)
         + (", consumerType=" + consumerType)
         + (", ackMode=" + ackMode)
-        + (", deliverPolicy=" + deliverPolicy + "]");
+        + (", deliverPolicy=" + deliverPolicy)
+        + (", deadLetterSubject=" + deadLetterSubject)
+        + (", maxDeliveries=" + maxDeliveries + "]");
   }
 
   /**
@@ -182,6 +210,8 @@ public final class JetStreamListenerDetails {
     private @Nullable ConsumerType consumerType;
     private @Nullable AckMode ackMode;
     private @Nullable DeliverPolicyType deliverPolicy;
+    private String deadLetterSubject = "";
+    private int maxDeliveries = -1;
 
     private Builder() {}
 
@@ -285,27 +315,72 @@ public final class JetStreamListenerDetails {
     }
 
     /**
+     * Sets the dead-letter subject. Empty string disables the dead-letter queue.
+     *
+     * @param deadLetterSubject subject to publish failed messages to
+     * @return this builder
+     */
+    public Builder withDeadLetterSubject(String deadLetterSubject) {
+      this.deadLetterSubject = deadLetterSubject;
+      return this;
+    }
+
+    /**
+     * Sets the maximum number of delivery attempts before dead-lettering. {@code -1} means
+     * unlimited.
+     *
+     * @param maxDeliveries max delivery count
+     * @return this builder
+     */
+    public Builder withMaxDeliveries(int maxDeliveries) {
+      this.maxDeliveries = maxDeliveries;
+      return this;
+    }
+
+    /**
      * Builds the {@link JetStreamListenerDetails} instance.
      *
      * @return a new {@link JetStreamListenerDetails}
-     * @throws IllegalStateException if any required field is null
+     * @throws IllegalArgumentException if configuration constraints are violated
      */
     public JetStreamListenerDetails build() {
-      if (bean == null) throw new IllegalStateException("bean is required");
-      if (method == null) throw new IllegalStateException("method is required");
-      if (subject == null) throw new IllegalStateException("subject is required");
-      if (stream == null) throw new IllegalStateException("stream is required");
-      if (durable == null) throw new IllegalStateException("durable is required");
-      if (queue == null) throw new IllegalStateException("queue is required");
-      if (consumerType == null) throw new IllegalStateException("consumerType is required");
-      if (ackMode == null) throw new IllegalStateException("ackMode is required");
-      if (deliverPolicy == null) throw new IllegalStateException("deliverPolicy is required");
+      if (bean == null) throw new IllegalArgumentException("bean is required");
+      if (method == null) throw new IllegalArgumentException("method is required");
+      if (subject == null) throw new IllegalArgumentException("subject is required");
+      if (stream == null) throw new IllegalArgumentException("stream is required");
+      if (durable == null) throw new IllegalArgumentException("durable is required");
+      if (queue == null) throw new IllegalArgumentException("queue is required");
+      if (consumerType == null) throw new IllegalArgumentException("consumerType is required");
+      if (ackMode == null) throw new IllegalArgumentException("ackMode is required");
+      if (deliverPolicy == null) throw new IllegalArgumentException("deliverPolicy is required");
       if (consumerType == ConsumerType.PULL && !queue.isEmpty()) {
         throw new IllegalArgumentException("queue group is not supported for pull consumers");
       }
+      if (!deadLetterSubject.isEmpty() && maxDeliveries <= 0) {
+        throw new IllegalArgumentException(
+            "maxDeliveries must be positive when deadLetterSubject is set");
+      }
+      if (maxDeliveries > 0 && deadLetterSubject.isEmpty()) {
+        throw new IllegalArgumentException(
+            "deadLetterSubject is required when maxDeliveries is set");
+      }
+      if (!deadLetterSubject.isEmpty() && ackMode == AckMode.MANUAL) {
+        throw new IllegalArgumentException(
+            "deadLetterSubject is not supported with MANUAL ack mode");
+      }
       ListenerMethodValidator.validate(method);
       return new JetStreamListenerDetails(
-          bean, method, subject, stream, durable, queue, consumerType, ackMode, deliverPolicy);
+          bean,
+          method,
+          subject,
+          stream,
+          durable,
+          queue,
+          consumerType,
+          ackMode,
+          deliverPolicy,
+          deadLetterSubject,
+          maxDeliveries);
     }
   }
 }

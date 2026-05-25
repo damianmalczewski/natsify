@@ -67,65 +67,65 @@ class JetStreamListenerHandleBuilderTests {
   }
 
   @Test
-  void givenMissingBean_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingBean_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(() -> fullBuilder().withBean(null).build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("bean is required");
   }
 
   @Test
-  void givenMissingMethod_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingMethod_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(() -> fullBuilder().withMethod(null).build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("method is required");
   }
 
   @Test
-  void givenMissingSubject_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingSubject_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(() -> fullBuilder().withSubject(null).build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("subject is required");
   }
 
   @Test
-  void givenMissingStream_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingStream_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(() -> fullBuilder().withStream(null).build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("stream is required");
   }
 
   @Test
-  void givenMissingDurable_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingDurable_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(() -> fullBuilder().withDurable(null).build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("durable is required");
   }
 
   @Test
-  void givenMissingQueue_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingQueue_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(() -> fullBuilder().withQueue(null).build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("queue is required");
   }
 
   @Test
-  void givenMissingConsumerType_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingConsumerType_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(() -> fullBuilder().withConsumerType(null).build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("consumerType is required");
   }
 
   @Test
-  void givenMissingAckMode_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingAckMode_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(() -> fullBuilder().withAckMode(null).build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("ackMode is required");
   }
 
   @Test
-  void givenMissingDeliverPolicy_whenBuild_thenThrowsIllegalStateException() {
+  void givenMissingDeliverPolicy_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(() -> fullBuilder().withDeliverPolicy(null).build())
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("deliverPolicy is required");
   }
 
@@ -135,5 +135,32 @@ class JetStreamListenerHandleBuilderTests {
             () -> fullBuilder().withConsumerType(ConsumerType.PULL).withQueue("some-queue").build())
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("queue group is not supported for pull consumers");
+  }
+
+  @Test
+  void givenDlqWithoutMaxDeliveries_whenBuild_thenThrowsIllegalArgumentException() {
+    assertThatThrownBy(() -> fullBuilder().withDeadLetterSubject("dlq.subject").build())
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("maxDeliveries must be positive when deadLetterSubject is set");
+  }
+
+  @Test
+  void givenMaxDeliveriesWithoutDlq_whenBuild_thenThrowsIllegalArgumentException() {
+    assertThatThrownBy(() -> fullBuilder().withMaxDeliveries(3).build())
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("deadLetterSubject is required when maxDeliveries is set");
+  }
+
+  @Test
+  void givenDlqWithManualAckMode_whenBuild_thenThrowsIllegalArgumentException() {
+    assertThatThrownBy(
+            () ->
+                fullBuilder()
+                    .withDeadLetterSubject("dlq.subject")
+                    .withMaxDeliveries(3)
+                    .withAckMode(AckMode.MANUAL)
+                    .build())
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("deadLetterSubject is not supported with MANUAL ack mode");
   }
 }

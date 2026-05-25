@@ -46,6 +46,9 @@ final class NoopObserver
   public void onTerminated(String subject, String stream, @Nullable Exception e) {}
 
   @Override
+  public void onDeadLettered(String subject, String stream) {}
+
+  @Override
   public void onProcessed(String subject, String stream, long durationNanos) {}
 
   @Override

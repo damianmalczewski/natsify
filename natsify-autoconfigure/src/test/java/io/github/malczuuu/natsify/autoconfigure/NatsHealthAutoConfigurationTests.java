@@ -47,7 +47,8 @@ class NatsHealthAutoConfigurationTests {
               Health health = indicator.health();
               assertThat(health).isNotNull();
               assertThat(health.getStatus()).isEqualTo(Status.UP);
-              assertThat(health.getDetails()).containsEntry("status", Connection.Status.CONNECTED);
+              assertThat(health.getDetails())
+                  .containsEntry("connectionStatus", Connection.Status.CONNECTED);
             });
   }
 
@@ -67,7 +68,7 @@ class NatsHealthAutoConfigurationTests {
               assertThat(health).isNotNull();
               assertThat(health.getStatus()).isEqualTo(Status.DOWN);
               assertThat(health.getDetails())
-                  .containsEntry("status", Connection.Status.DISCONNECTED);
+                  .containsEntry("connectionStatus", Connection.Status.DISCONNECTED);
             });
   }
 

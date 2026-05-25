@@ -100,6 +100,18 @@ public class MicrometerJetStreamListenerObserver implements JetStreamListenerObs
   }
 
   /**
+   * Called when a message is dead-lettered after exhausting delivery attempts.
+   *
+   * @param subject the message subject
+   * @param stream the JetStream stream name
+   */
+  @Override
+  public void onDeadLettered(String subject, String stream) {
+    Tags tags = Tags.of(Tag.of("subject", subject), Tag.of("stream", stream));
+    meterRegistry.counter("nats.jetstream.messages.deadlettered", tags).increment();
+  }
+
+  /**
    * Called after every invocation with the total processing duration.
    *
    * @param subject the message subject
