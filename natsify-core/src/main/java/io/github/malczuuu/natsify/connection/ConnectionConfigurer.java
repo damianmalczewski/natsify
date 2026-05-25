@@ -57,8 +57,8 @@ public final class ConnectionConfigurer
   private final NatsConnectionObserver natsConnectionObserver;
   private final NatsErrorObserver natsErrorObserver;
 
-  private volatile @Nullable Connection connection = null;
   private volatile boolean running = false;
+  private volatile @Nullable Connection connection = null;
 
   /**
    * Creates a new {@link ConnectionConfigurer}.

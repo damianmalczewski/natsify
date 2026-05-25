@@ -42,8 +42,8 @@ final class JetStreamPushHandler implements JetStreamHandler {
   private final Consumer<Message> messageConsumer;
 
   private volatile boolean running = false;
-  private @Nullable Dispatcher dispatcher = null;
-  private @Nullable JetStreamSubscription subscription = null;
+  private volatile @Nullable Dispatcher dispatcher = null;
+  private volatile @Nullable JetStreamSubscription subscription = null;
 
   JetStreamPushHandler(
       Connection connection,

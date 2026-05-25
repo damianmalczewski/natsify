@@ -43,8 +43,8 @@ final class JetStreamPullHandler implements JetStreamHandler {
   private final Duration fetchTimeout;
 
   private volatile boolean running = false;
-  private @Nullable JetStreamSubscription subscription = null;
-  private @Nullable Thread listenerThread = null;
+  private volatile @Nullable JetStreamSubscription subscription = null;
+  private volatile @Nullable Thread listenerThread = null;
 
   JetStreamPullHandler(
       JetStream stream,
