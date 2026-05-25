@@ -162,7 +162,7 @@ public final class NatsListenerDetails {
       if (method == null) throw new IllegalArgumentException("method is required");
       if (subject == null) throw new IllegalArgumentException("subject is required");
       if (queue == null) throw new IllegalArgumentException("queue is required");
-      ListenerMethodValidator.validate(method);
+      ListenerMethodValidation.validateNatsListener(method);
       return new NatsListenerDetails(bean, method, subject, queue);
     }
   }

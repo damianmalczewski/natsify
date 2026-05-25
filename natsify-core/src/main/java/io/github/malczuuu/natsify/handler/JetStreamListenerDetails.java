@@ -368,7 +368,7 @@ public final class JetStreamListenerDetails {
         throw new IllegalArgumentException(
             "deadLetterSubject is not supported with MANUAL ack mode");
       }
-      ListenerMethodValidator.validate(method);
+      ListenerMethodValidation.validateJetStreamListener(method);
       return new JetStreamListenerDetails(
           bean,
           method,

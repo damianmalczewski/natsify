@@ -20,20 +20,38 @@ import io.github.malczuuu.natsify.annotation.NatsHeader;
 import io.github.malczuuu.natsify.annotation.NatsHeaders;
 import io.github.malczuuu.natsify.annotation.NatsSubject;
 import io.nats.client.impl.Headers;
+import io.nats.client.impl.NatsJetStreamMetaData;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.List;
 
-class ListenerMethodValidator {
+final class ListenerMethodValidation {
 
-  static void validate(Method method) {
+  static void validateNatsListener(Method method) {
+    validate(method, false);
+  }
+
+  static void validateJetStreamListener(Method method) {
+    validate(method, true);
+  }
+
+  private static void validate(Method method, boolean jetStream) {
     Parameter[] params = method.getParameters();
     for (int i = 0; i < params.length; i++) {
-      validateParameter(method, params[i], i);
+      validateParameter(method, params[i], i, jetStream);
     }
   }
 
-  private static void validateParameter(Method method, Parameter param, int index) {
+  private static void validateParameter(
+      Method method, Parameter param, int index, boolean jetStream) {
+    if (!jetStream && NatsJetStreamMetaData.class.isAssignableFrom(param.getType())) {
+      throw new IllegalArgumentException(
+          "Parameter "
+              + index
+              + " of "
+              + method.toGenericString()
+              + ": NatsJetStreamMetaData is only allowed in @JetStreamListener methods");
+    }
     NatsHeader natsHeader = param.getAnnotation(NatsHeader.class);
     if (natsHeader != null) {
       String name = natsHeader.value().isEmpty() ? natsHeader.name() : natsHeader.value();
@@ -76,4 +94,6 @@ class ListenerMethodValidator {
       }
     }
   }
+
+  private ListenerMethodValidation() {}
 }
