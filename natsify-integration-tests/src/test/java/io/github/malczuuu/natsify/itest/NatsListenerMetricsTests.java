@@ -17,6 +17,7 @@
 package io.github.malczuuu.natsify.itest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import io.github.malczuuu.natsify.core.NatsOperations;
 import io.github.malczuuu.natsify.itest.infra.NatsListenerComponent;
@@ -88,6 +89,33 @@ class NatsListenerMetricsTests extends AbstractIntegrationTests {
             .counter();
     assertThat(counter).isNotNull();
     assertThat(Objects.requireNonNull(counter).count()).isEqualTo(countBefore + 1.0);
+  }
+
+  @Test
+  void givenNatsListener_whenInvalidMessageReceived_thenErrorCounterIncrementedByOne() {
+    Counter before =
+        meterRegistry
+            .find("nats.listener.messages.error")
+            .tag("subject", "combo.object")
+            .tag("queue", "")
+            .counter();
+    double countBefore = before != null ? before.count() : 0.0;
+
+    natsOperations.publish("combo.object", "not-valid-json");
+
+    await()
+        .atMost(5, TimeUnit.SECONDS)
+        .untilAsserted(
+            () -> {
+              Counter counter =
+                  meterRegistry
+                      .find("nats.listener.messages.error")
+                      .tag("subject", "combo.object")
+                      .tag("queue", "")
+                      .counter();
+              assertThat(counter).isNotNull();
+              assertThat(Objects.requireNonNull(counter).count()).isEqualTo(countBefore + 1.0);
+            });
   }
 
   @Test

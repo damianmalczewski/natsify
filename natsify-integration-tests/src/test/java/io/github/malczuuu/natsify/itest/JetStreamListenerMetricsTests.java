@@ -98,6 +98,37 @@ class JetStreamListenerMetricsTests extends AbstractIntegrationTests {
   }
 
   @Test
+  void givenJetStreamListener_whenInvalidMessageReceived_thenTerminatedCounterIncrementedByOne() {
+    double countBefore =
+        meterRegistry
+            .find("nats.jetstream.messages.terminated")
+            .tag("subject", "js.object")
+            .tag("stream", "TEST")
+            .counters()
+            .stream()
+            .mapToDouble(Counter::count)
+            .sum();
+
+    natsOperations.publish("js.object", "not-valid-json");
+
+    await()
+        .atMost(5, TimeUnit.SECONDS)
+        .untilAsserted(
+            () -> {
+              double count =
+                  meterRegistry
+                      .find("nats.jetstream.messages.terminated")
+                      .tag("subject", "js.object")
+                      .tag("stream", "TEST")
+                      .counters()
+                      .stream()
+                      .mapToDouble(Counter::count)
+                      .sum();
+              assertThat(count).isEqualTo(countBefore + 1.0);
+            });
+  }
+
+  @Test
   void givenJetStreamListener_whenMessageProcessed_thenDurationTimerIncrementedByOne() {
     Timer before =
         meterRegistry
