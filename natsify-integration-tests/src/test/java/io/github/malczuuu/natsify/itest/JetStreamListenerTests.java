@@ -90,6 +90,15 @@ class JetStreamListenerTests extends AbstractIntegrationTests {
   }
 
   @Test
+  void givenPushQueueGroupSubject_whenMessagePublished_thenHandlerReceivesMessage()
+      throws Exception {
+    natsOperations.publish("js.push-queue", "push-queued");
+
+    String received = handler.pushQueueGroupMessages.poll(5, TimeUnit.SECONDS);
+    assertThat(received).isEqualTo("push-queued");
+  }
+
+  @Test
   void givenGenericListSubject_whenJsonMessagePublished_thenHandlerDeserializesList()
       throws Exception {
     natsOperations.publish(

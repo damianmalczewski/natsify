@@ -16,6 +16,7 @@
 
 package io.github.malczuuu.natsify.handler;
 
+import io.github.malczuuu.natsify.core.ListenerConfigureException;
 import io.nats.client.Connection;
 import io.nats.client.Dispatcher;
 import io.nats.client.JetStream;
@@ -60,11 +61,11 @@ final class JetStreamPushHandler implements JetStreamHandler {
   @Override
   public synchronized void start() throws IOException, JetStreamApiException {
     if (running) {
-      log.warn(
-          "Attempted to call start() on already running {}",
-          JetStreamPushHandler.class.getSimpleName());
-      return;
+      throw new ListenerConfigureException(
+          "Attempted to call start() on already started "
+              + JetStreamPushHandler.class.getSimpleName());
     }
+    running = true;
 
     PushSubscribeOptions.Builder builder =
         PushSubscribeOptions.builder().configuration(configuration);
@@ -73,7 +74,6 @@ final class JetStreamPushHandler implements JetStreamHandler {
     }
     PushSubscribeOptions options = builder.build();
     dispatcher = connection.createDispatcher();
-    running = true;
     if (listener.getQueue().isEmpty()) {
       subscription =
           stream.subscribe(
@@ -98,9 +98,9 @@ final class JetStreamPushHandler implements JetStreamHandler {
   @Override
   public synchronized void stop() {
     if (!running) {
-      log.warn(
-          "Attempted to call stop() on not running {}", JetStreamPushHandler.class.getSimpleName());
-      return;
+      throw new ListenerConfigureException(
+          "Attempted to call stop() on already stopped "
+              + JetStreamPushHandler.class.getSimpleName());
     }
     running = false;
 

@@ -16,6 +16,7 @@
 
 package io.github.malczuuu.natsify.handler;
 
+import io.github.malczuuu.natsify.core.ListenerConfigureException;
 import io.nats.client.Connection;
 import io.nats.client.Dispatcher;
 import io.nats.client.Message;
@@ -45,13 +46,13 @@ final class SubscriptionHandler implements NatsListenerHandler {
   @Override
   public synchronized void start() {
     if (running) {
-      log.warn(
-          "Attempted to call start() on already running {}",
-          SubscriptionHandler.class.getSimpleName());
-      return;
+      throw new ListenerConfigureException(
+          "Attempted to call start() on already running "
+              + SubscriptionHandler.class.getSimpleName());
     }
-    dispatcher = connection.createDispatcher(messageConsumer::accept);
     running = true;
+
+    dispatcher = connection.createDispatcher(messageConsumer::accept);
     if (listener.getQueue().isEmpty()) {
       dispatcher.subscribe(listener.getSubject());
       log.info("Subscribed to NATS subject {}", listener.getSubject());
@@ -65,9 +66,9 @@ final class SubscriptionHandler implements NatsListenerHandler {
   @Override
   public synchronized void stop() {
     if (!running) {
-      log.warn(
-          "Attempted to call stop() on not running {}", SubscriptionHandler.class.getSimpleName());
-      return;
+      throw new ListenerConfigureException(
+          "Attempted to call stop() on already stopped "
+              + SubscriptionHandler.class.getSimpleName());
     }
     running = false;
 

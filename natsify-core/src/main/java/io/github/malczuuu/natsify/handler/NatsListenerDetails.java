@@ -162,6 +162,7 @@ public final class NatsListenerDetails {
       if (method == null) throw new IllegalStateException("method is required");
       if (subject == null) throw new IllegalStateException("subject is required");
       if (queue == null) throw new IllegalStateException("queue is required");
+      ListenerMethodValidator.validate(method);
       return new NatsListenerDetails(bean, method, subject, queue);
     }
   }

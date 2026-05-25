@@ -34,6 +34,7 @@ public class JetStreamListenerComponent {
   public final BlockingQueue<Message> messages = new LinkedBlockingQueue<>();
   public final BlockingQueue<SampleMessage> objects = new LinkedBlockingQueue<>();
   public final BlockingQueue<String> queueGroupMessages = new LinkedBlockingQueue<>();
+  public final BlockingQueue<String> pushQueueGroupMessages = new LinkedBlockingQueue<>();
   public final BlockingQueue<List<SampleMessage>> genericLists = new LinkedBlockingQueue<>();
   public final BlockingQueue<SampleMessage[]> arrays = new LinkedBlockingQueue<>();
   public final BlockingQueue<Headers> headersValuesByType = new LinkedBlockingQueue<>();
@@ -70,9 +71,20 @@ public class JetStreamListenerComponent {
       subject = "js.queue",
       stream = "TEST",
       durable = "queue-consumer",
+      consumerType = ConsumerType.PUSH,
       queue = "test-queue-queue")
   public void handleQueueGroup(String data) {
     queueGroupMessages.add(data);
+  }
+
+  @JetStreamListener(
+      subject = "js.push-queue",
+      stream = "TEST",
+      durable = "push-queue-consumer",
+      consumerType = ConsumerType.PUSH,
+      queue = "push-queue-group")
+  public void handlePushQueueGroup(String data) {
+    pushQueueGroupMessages.add(data);
   }
 
   @JetStreamListener(
@@ -103,6 +115,7 @@ public class JetStreamListenerComponent {
     messages.clear();
     objects.clear();
     queueGroupMessages.clear();
+    pushQueueGroupMessages.clear();
     genericLists.clear();
     arrays.clear();
     headersValuesByType.clear();

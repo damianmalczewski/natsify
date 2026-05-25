@@ -16,6 +16,7 @@
 
 package io.github.malczuuu.natsify.handler;
 
+import io.github.malczuuu.natsify.core.ListenerConfigureException;
 import io.nats.client.JetStream;
 import io.nats.client.JetStreamApiException;
 import io.nats.client.JetStreamSubscription;
@@ -57,11 +58,11 @@ final class JetStreamPullHandler implements JetStreamHandler {
   @Override
   public synchronized void start() throws IOException, JetStreamApiException {
     if (running) {
-      log.warn(
-          "Attempted to call start() on already running {}",
-          JetStreamPullHandler.class.getSimpleName());
-      return;
+      throw new ListenerConfigureException(
+          "Attempted to call start() on already started "
+              + JetStreamPullHandler.class.getSimpleName());
     }
+    running = true;
 
     PullSubscribeOptions.Builder builder =
         PullSubscribeOptions.builder().configuration(configuration);
@@ -69,7 +70,6 @@ final class JetStreamPullHandler implements JetStreamHandler {
       builder.stream(listener.getStream());
     }
     subscription = stream.subscribe(listener.getSubject(), builder.build());
-    running = true;
     listenerThread = new Thread(this::runPollPool, "nats-pull-" + listener.getSubject());
     listenerThread.setDaemon(true);
     listenerThread.start();
@@ -79,9 +79,9 @@ final class JetStreamPullHandler implements JetStreamHandler {
   @Override
   public synchronized void stop() {
     if (!running) {
-      log.warn(
-          "Attempted to call stop() on not running {}", JetStreamPullHandler.class.getSimpleName());
-      return;
+      throw new ListenerConfigureException(
+          "Attempted to call stop() on already stopped "
+              + JetStreamPullHandler.class.getSimpleName());
     }
     running = false;
 

@@ -128,4 +128,12 @@ class JetStreamListenerHandleBuilderTests {
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("deliverPolicy is required");
   }
+
+  @Test
+  void givenPullConsumerWithQueue_whenBuild_thenThrowsIllegalArgumentException() {
+    assertThatThrownBy(
+            () -> fullBuilder().withConsumerType(ConsumerType.PULL).withQueue("some-queue").build())
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("queue group is not supported for pull consumers");
+  }
 }

@@ -300,6 +300,10 @@ public final class JetStreamListenerDetails {
       if (consumerType == null) throw new IllegalStateException("consumerType is required");
       if (ackMode == null) throw new IllegalStateException("ackMode is required");
       if (deliverPolicy == null) throw new IllegalStateException("deliverPolicy is required");
+      if (consumerType == ConsumerType.PULL && !queue.isEmpty()) {
+        throw new IllegalArgumentException("queue group is not supported for pull consumers");
+      }
+      ListenerMethodValidator.validate(method);
       return new JetStreamListenerDetails(
           bean, method, subject, stream, durable, queue, consumerType, ackMode, deliverPolicy);
     }
