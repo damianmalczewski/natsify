@@ -20,6 +20,7 @@ Requires Spring Boot 4.x.
     - [Parameter annotations](#parameter-annotations)
         - [`@NatsPayload`](#natspayload)
         - [`@NatsHeader`](#natsheader)
+        - [`@NatsSubject`](#natssubject)
         - [`@NatsHeaders`](#natsheaders)
     - [JSON deserialization](#json-deserialization)
     - [No-arg methods](#no-arg-methods)
