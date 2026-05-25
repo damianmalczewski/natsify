@@ -91,11 +91,12 @@ Parameters are resolved in the order listed below. The first match wins.
 |----------|--------------------------------------------------------------------------|------------------------------------------------------------|
 | 1        | Parameter type is `io.nats.client.Message` (or subtype)                  | Raw NATS message                                           |
 | 2        | Parameter annotated with `@NatsHeader`                                   | Header value(s) as `String`, `List<String>`, or `String[]` |
-| 3        | Parameter annotated with `@NatsHeaders`                                  | All headers as `io.nats.client.impl.Headers`               |
-| 4        | Parameter type is `io.nats.client.impl.Headers` (without `@NatsPayload`) | All headers as `io.nats.client.impl.Headers`               |
-| 5        | Parameter type is `byte[]`                                               | Raw message body bytes                                     |
-| 6        | Parameter type is `String`                                               | Message body decoded as UTF-8                              |
-| 7        | Any other type, or `@NatsPayload`-annotated parameter                    | Message body deserialized from JSON                        |
+| 3        | Parameter annotated with `@NatsSubject`                                  | Message subject as `String`                                |
+| 4        | Parameter annotated with `@NatsHeaders`                                  | All headers as `io.nats.client.impl.Headers`               |
+| 5        | Parameter type is `io.nats.client.impl.Headers` (without `@NatsPayload`) | All headers as `io.nats.client.impl.Headers`               |
+| 6        | Parameter type is `byte[]`                                               | Raw message body bytes                                     |
+| 7        | Parameter type is `String`                                               | Message body decoded as UTF-8                              |
+| 8        | Any other type, or `@NatsPayload`-annotated parameter                    | Message body deserialized from JSON                        |
 
 ### Parameter annotations
 
@@ -133,6 +134,19 @@ public void handle(@NatsHeader("X-Tags") String[] tags) {}
 ```
 
 `value` and `name` are aliases; either can be used to specify the header name.
+
+#### `@NatsSubject`
+
+Injects the subject the message was published to. Useful when a listener matches a wildcard subject
+and needs to inspect the concrete subject at runtime.
+
+```java
+@NatsListener(subject = "events.>")
+public void handle(Event event, @NatsSubject String subject) {}
+
+@JetStreamListener(subject = "orders.>", stream = "ORDERS", durable = "router")
+public void handle(Order order, @NatsSubject String subject) {}
+```
 
 #### `@NatsHeaders`
 

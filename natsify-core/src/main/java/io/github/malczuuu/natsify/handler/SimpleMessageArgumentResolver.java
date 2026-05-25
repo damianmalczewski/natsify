@@ -19,6 +19,7 @@ package io.github.malczuuu.natsify.handler;
 import io.github.malczuuu.natsify.annotation.NatsHeader;
 import io.github.malczuuu.natsify.annotation.NatsHeaders;
 import io.github.malczuuu.natsify.annotation.NatsPayload;
+import io.github.malczuuu.natsify.annotation.NatsSubject;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
 import java.lang.reflect.Parameter;
@@ -33,8 +34,9 @@ import tools.jackson.databind.json.JsonMapper;
  * message data, headers, and metadata.
  *
  * <p>Supports parameters of type {@link Message}, {@link Headers} (with or without {@link
- * NatsHeaders @NatsHeaders}), individual header values via {@link NatsHeader @NatsHeader}, {@code
- * byte[]}, {@link String}, and arbitrary JSON-deserializable types.
+ * NatsHeaders @NatsHeaders}), individual header values via {@link NatsHeader @NatsHeader}, the
+ * message subject via {@link NatsSubject @NatsSubject}, {@code byte[]}, {@link String}, and
+ * arbitrary JSON-deserializable types.
  */
 public class SimpleMessageArgumentResolver implements MessageArgumentResolver {
 
@@ -92,6 +94,9 @@ public class SimpleMessageArgumentResolver implements MessageArgumentResolver {
         return values != null ? values.toArray(new String[0]) : null;
       }
       return msgHeaders.getFirst(name);
+    }
+    if (param.isAnnotationPresent(NatsSubject.class)) {
+      return msg.getSubject();
     }
     if (param.isAnnotationPresent(NatsHeaders.class)
         || (!param.isAnnotationPresent(NatsPayload.class)

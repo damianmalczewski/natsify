@@ -23,6 +23,7 @@ import io.github.malczuuu.natsify.SampleMessage;
 import io.github.malczuuu.natsify.annotation.NatsHeader;
 import io.github.malczuuu.natsify.annotation.NatsHeaders;
 import io.github.malczuuu.natsify.annotation.NatsPayload;
+import io.github.malczuuu.natsify.annotation.NatsSubject;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
 import io.nats.client.impl.NatsMessage;
@@ -82,6 +83,25 @@ class SimpleMessageArgumentResolverTests {
     Object result = resolver.resolveArgument(param("withString", String.class), msg);
 
     assertThat(result).isNull();
+  }
+
+  @Test
+  void givenNatsSubjectAnnotation_whenResolved_thenReturnsMessageSubject() {
+    Message msg = NatsMessage.builder().subject("events.created").data(new byte[0]).build();
+
+    Object result = resolver.resolveArgument(param("withSubject", String.class), msg);
+
+    assertThat(result).isEqualTo("events.created");
+  }
+
+  @Test
+  void givenNatsSubjectAnnotationOverridesStringBodyResolution_whenResolved_thenReturnsSubject() {
+    byte[] body = "body-content".getBytes(StandardCharsets.UTF_8);
+    Message msg = NatsMessage.builder().subject("my.subject").data(body).build();
+
+    Object result = resolver.resolveArgument(param("withSubject", String.class), msg);
+
+    assertThat(result).isEqualTo("my.subject");
   }
 
   @Test
@@ -294,6 +314,8 @@ class SimpleMessageArgumentResolverTests {
     void withList(List<SampleMessage> list) {}
 
     void withArray(SampleMessage[] arr) {}
+
+    void withSubject(@NatsSubject String s) {}
 
     void withNatsHeaders(@NatsHeaders Headers h) {}
 
