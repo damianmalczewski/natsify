@@ -95,9 +95,10 @@ Parameters are resolved in the order listed below. The first match wins.
 | 3        | Parameter annotated with `@NatsSubject`                                  | Message subject as `String`                                |
 | 4        | Parameter annotated with `@NatsHeaders`                                  | All headers as `io.nats.client.impl.Headers`               |
 | 5        | Parameter type is `io.nats.client.impl.Headers` (without `@NatsPayload`) | All headers as `io.nats.client.impl.Headers`               |
-| 6        | Parameter type is `byte[]`                                               | Raw message body bytes                                     |
-| 7        | Parameter type is `String`                                               | Message body decoded as UTF-8                              |
-| 8        | Any other type, or `@NatsPayload`-annotated parameter                    | Message body deserialized from JSON                        |
+| 6        | Parameter type is `NatsJetStreamMetaData` (without `@NatsPayload`)       | JetStream message metadata                                 |
+| 7        | Parameter type is `byte[]`                                               | Raw message body bytes                                     |
+| 8        | Parameter type is `String`                                               | Message body decoded as UTF-8                              |
+| 9        | Any other type, or `@NatsPayload`-annotated parameter                    | Message body deserialized from JSON                        |
 
 ### Parameter annotations
 

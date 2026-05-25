@@ -26,6 +26,7 @@ import io.github.malczuuu.natsify.annotation.NatsPayload;
 import io.github.malczuuu.natsify.annotation.NatsSubject;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
+import io.nats.client.impl.NatsJetStreamMetaData;
 import io.nats.client.impl.NatsMessage;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -275,6 +276,30 @@ class SimpleMessageArgumentResolverTests {
   }
 
   @Test
+  void givenMetaDataParam_whenResolved_thenReturnsMessageMetaData() {
+    NatsJetStreamMetaData metaData = Mockito.mock(NatsJetStreamMetaData.class);
+    Message msg = Mockito.mock(Message.class);
+    Mockito.when(msg.metaData()).thenReturn(metaData);
+
+    Object result =
+        resolver.resolveArgument(param("withMetaData", NatsJetStreamMetaData.class), msg);
+
+    assertThat(result).isSameAs(metaData);
+  }
+
+  @Test
+  void givenNatsPayloadAnnotationOnMetaDataType_whenResolved_thenDeserializesData() {
+    byte[] json = "[1,2,3]".getBytes(StandardCharsets.UTF_8);
+
+    assertThatThrownBy(
+            () ->
+                resolver.resolveArgument(
+                    param("withNatsPayloadAnnotatedMetaData", NatsJetStreamMetaData.class),
+                    message(json)))
+        .isInstanceOf(JacksonException.class);
+  }
+
+  @Test
   void givenInvalidJson_whenResolved_thenThrowsRuntimeException() {
     byte[] bad = "not-json".getBytes(StandardCharsets.UTF_8);
 
@@ -330,5 +355,9 @@ class SimpleMessageArgumentResolverTests {
     void withHeaderAsArray(@NatsHeader("X-Foo") String[] h) {}
 
     void withDataAnnotatedHeaders(@NatsPayload Headers h) {}
+
+    void withMetaData(NatsJetStreamMetaData m) {}
+
+    void withNatsPayloadAnnotatedMetaData(@NatsPayload NatsJetStreamMetaData m) {}
   }
 }

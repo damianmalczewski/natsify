@@ -23,6 +23,7 @@ import io.github.malczuuu.natsify.itest.infra.JetStreamListenerComponent;
 import io.github.malczuuu.natsify.itest.model.SampleMessage;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
+import io.nats.client.impl.NatsJetStreamMetaData;
 import io.nats.client.impl.NatsMessage;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -179,5 +180,15 @@ class JetStreamListenerTests extends AbstractIntegrationTests {
     Headers received = handler.headersValuesByType.poll(5, TimeUnit.SECONDS);
     assertThat(received).isNotNull();
     assertThat(received.getFirst("X-Type")).isEqualTo("object-header-value");
+  }
+
+  @Test
+  void givenMetaDataParamSubject_whenMessagePublished_thenHandlerReceivesMetaData()
+      throws Exception {
+    natsOperations.publish("js.metadata", "meta body");
+
+    NatsJetStreamMetaData received = handler.metaDataValues.poll(5, TimeUnit.SECONDS);
+    assertThat(received).isNotNull();
+    assertThat(received.getStream()).isEqualTo("TEST");
   }
 }

@@ -21,6 +21,7 @@ import io.github.malczuuu.natsify.annotation.JetStreamListener;
 import io.github.malczuuu.natsify.itest.model.SampleMessage;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
+import io.nats.client.impl.NatsJetStreamMetaData;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -38,6 +39,7 @@ public class JetStreamListenerComponent {
   public final BlockingQueue<List<SampleMessage>> genericLists = new LinkedBlockingQueue<>();
   public final BlockingQueue<SampleMessage[]> arrays = new LinkedBlockingQueue<>();
   public final BlockingQueue<Headers> headersValuesByType = new LinkedBlockingQueue<>();
+  public final BlockingQueue<NatsJetStreamMetaData> metaDataValues = new LinkedBlockingQueue<>();
 
   @JetStreamListener(
       subject = "js.string",
@@ -109,6 +111,15 @@ public class JetStreamListenerComponent {
     headersValuesByType.add(allHeaders);
   }
 
+  @JetStreamListener(
+      subject = "js.metadata",
+      stream = "TEST",
+      durable = "metadata-consumer",
+      consumerType = ConsumerType.PUSH)
+  public void handleMetaData(NatsJetStreamMetaData metaData) {
+    metaDataValues.add(metaData);
+  }
+
   public void clearAll() {
     strings.clear();
     bytes.clear();
@@ -119,5 +130,6 @@ public class JetStreamListenerComponent {
     genericLists.clear();
     arrays.clear();
     headersValuesByType.clear();
+    metaDataValues.clear();
   }
 }

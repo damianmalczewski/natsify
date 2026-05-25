@@ -22,6 +22,7 @@ import io.github.malczuuu.natsify.annotation.NatsPayload;
 import io.github.malczuuu.natsify.annotation.NatsSubject;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
+import io.nats.client.impl.NatsJetStreamMetaData;
 import java.lang.reflect.Parameter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -35,8 +36,8 @@ import tools.jackson.databind.json.JsonMapper;
  *
  * <p>Supports parameters of type {@link Message}, {@link Headers} (with or without {@link
  * NatsHeaders @NatsHeaders}), individual header values via {@link NatsHeader @NatsHeader}, the
- * message subject via {@link NatsSubject @NatsSubject}, {@code byte[]}, {@link String}, and
- * arbitrary JSON-deserializable types.
+ * message subject via {@link NatsSubject @NatsSubject}, {@link NatsJetStreamMetaData}, {@code
+ * byte[]}, {@link String}, and arbitrary JSON-deserializable types.
  */
 public class SimpleMessageArgumentResolver implements MessageArgumentResolver {
 
@@ -102,6 +103,10 @@ public class SimpleMessageArgumentResolver implements MessageArgumentResolver {
         || (!param.isAnnotationPresent(NatsPayload.class)
             && Headers.class.isAssignableFrom(param.getType()))) {
       return msg.getHeaders() != null ? msg.getHeaders() : new Headers(null, false);
+    }
+    if (!param.isAnnotationPresent(NatsPayload.class)
+        && NatsJetStreamMetaData.class.isAssignableFrom(param.getType())) {
+      return msg.metaData();
     }
     byte[] data = msg.getData();
     if (param.getType() == byte[].class) {
