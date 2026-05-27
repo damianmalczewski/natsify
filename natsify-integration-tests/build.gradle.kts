@@ -5,10 +5,8 @@ plugins {
 }
 
 dependencies {
-    // Main
     implementation(project(":natsify-starter"))
 
-    // Test
     testImplementation(project(":natsify-starter-test"))
     testImplementation(libs.spring.boot.starter.micrometer.metrics.test)
     testImplementation(libs.spring.boot.testcontainers)

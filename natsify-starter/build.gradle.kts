@@ -5,7 +5,6 @@ plugins {
 }
 
 dependencies {
-    api(libs.spring.boot.starter)
     api(libs.spring.boot.starter.jackson)
     api(project(":natsify-autoconfigure"))
 }

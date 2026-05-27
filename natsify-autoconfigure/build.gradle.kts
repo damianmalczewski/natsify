@@ -7,7 +7,6 @@ plugins {
 }
 
 dependencies {
-    // Main
     api(libs.spring.boot.autoconfigure)
     api(project(":natsify-core"))
 
@@ -17,9 +16,9 @@ dependencies {
     compileOnly(libs.micrometer.core)
     compileOnly(libs.testcontainers.nats)
 
+    annotationProcessor(libs.spring.boot.autoconfigure.processor)
     annotationProcessor(libs.spring.boot.configuration.processor)
 
-    // Test
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.boot.health)
     testImplementation(libs.spring.boot.jackson)
@@ -35,6 +34,6 @@ dependencies {
 
 // see buildSrc/src/main/kotlin/internal.publishing-convention.gradle.kts
 internalPublishing {
-    displayName = "Natsify Auto-configure"
-    description = "Spring Boot Auto-configuration Module of Natsify Project"
+    displayName = "Natsify Auto-Configure"
+    description = "Spring Boot Auto-Configure Module of Natsify Project"
 }

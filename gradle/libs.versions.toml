@@ -40,8 +40,8 @@ spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-st
 spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test", version.ref = "spring-boot" }
 
 # spring boot modules
-spring-boot-actuator-autoconfigure = { module = "org.springframework.boot:spring-boot-actuator-autoconfigure", version.ref = "spring-boot" }
 spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "spring-boot" }
+spring-boot-autoconfigure-processor = { module = "org.springframework.boot:spring-boot-autoconfigure-processor", version.ref = "spring-boot" }
 spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor", version.ref = "spring-boot" }
 spring-boot-health = { module = "org.springframework.boot:spring-boot-health", version.ref = "spring-boot" }
 spring-boot-jackson = { module = "org.springframework.boot:spring-boot-jackson", version.ref = "spring-boot" }
@@ -51,17 +51,15 @@ spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-te
 # spring core modules
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring-framework" }
 
-# direct versions
+# other modules
 errorprone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone" }
 jackson-databind = { module = "tools.jackson.core:jackson-databind", version.ref = "jackson" }
 jnats = { module = "io.nats:jnats", version.ref = "jnats" }
 jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
-junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit" }
 micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
-testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainers" }
 testcontainers-nats = { module = "io.github.amadeusitgroup.testcontainers:nats", version.ref = "testcontainers-nats" }

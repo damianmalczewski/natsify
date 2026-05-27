@@ -32,8 +32,8 @@ publishing {
             pom {
                 name = internalPublishing.displayName
                 description = internalPublishing.description
-                url = property("internal.pom.url") as String
-                inceptionYear = property("internal.pom.inception-year") as String
+                url = findProperty("internal.pom.url") as? String
+                inceptionYear = findProperty("internal.pom.inception-year") as? String
                 licenses {
                     project.findLicenses().forEach {
                         license {
@@ -57,13 +57,13 @@ publishing {
                     }
                 }
                 scm {
-                    connection = property("internal.pom.scm.connection") as String
-                    developerConnection = property("internal.pom.scm.developer-connection") as String
-                    url = property("internal.pom.scm.url") as String
+                    connection = findProperty("internal.pom.scm.connection") as? String
+                    developerConnection = findProperty("internal.pom.scm.developer-connection") as? String
+                    url = findProperty("internal.pom.scm.url") as? String
                 }
                 issueManagement {
-                    system = property("internal.pom.issue-management.system") as String
-                    url = property("internal.pom.issue-management.url") as String
+                    system = findProperty("internal.pom.issue-management.system") as? String
+                    url = findProperty("internal.pom.issue-management.url") as? String
                 }
             }
         }

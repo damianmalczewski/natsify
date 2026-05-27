@@ -7,7 +7,6 @@ plugins {
 }
 
 dependencies {
-    // Main
     api(libs.jnats)
     api(libs.jspecify)
     api(libs.spring.context)
@@ -16,7 +15,6 @@ dependencies {
     compileOnly(libs.micrometer.core)
     compileOnly(libs.slf4j.api)
 
-    // Test
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.jackson.databind)
     testImplementation(libs.micrometer.core)

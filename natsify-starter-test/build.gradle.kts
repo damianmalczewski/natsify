@@ -5,7 +5,6 @@ plugins {
 }
 
 dependencies {
-    api(libs.spring.boot.starter.test)
     api(libs.spring.boot.starter.jackson.test)
     api(project(":natsify-starter"))
 }
