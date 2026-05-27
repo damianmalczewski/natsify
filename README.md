@@ -12,6 +12,7 @@ Requires Spring Boot 4.x.
 
 ## Table of Contents
 
+- [Installation](#installation)
 - [Configuration](#configuration)
 - [Listener annotations](#listener-annotations)
     - [`@NatsListener`](#natslistener)
@@ -36,6 +37,35 @@ Requires Spring Boot 4.x.
     - [Metrics](#metrics)
 - [Testing](#testing)
     - [Testcontainers](#testcontainers)
+
+## Installation
+
+Add the starter module to your dependencies.
+
+```xml
+<dependency>
+    <groupId>io.github.malczuuu.natsify</groupId>
+    <artifactId>natsify-starter</artifactId>
+    <version>{version}</version>
+</dependency>
+<dependency>
+    <groupId>io.github.malczuuu.natsify</groupId>
+    <artifactId>natsify-starter-test</artifactId>
+    <version>{version}</version>
+    <scope>test</scope>
+</dependency>
+```
+
+```kotlin
+dependencies {
+    implementation("io.github.malczuuu.natsify:natsify-starter:{version}")
+    testImplementation("io.github.malczuuu.natsify:natsify-starter-test:{version}")
+}
+```
+
+Starter modules are opinionated conveniences that pull in the necessary dependencies and auto-configurations. If you
+want more control, you can depend on `natsify-core` and `natsify-autoconfigure` separately. Note that these modules have
+most transitive dependencies marked with `compileOnly`, so proper dependency management will be required.
 
 ## Configuration
 
