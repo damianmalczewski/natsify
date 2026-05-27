@@ -52,7 +52,7 @@ public class ListenerDeadLetterExample {
   @NatsListener(subject = "dlq.telemetry")
   public void onDeadLetter(Message msg) {
     deadLetters.add(capture(msg));
-    log.info("Received dead-letter on subject {}", msg.getSubject());
+    log.info("Received dead-letter on subject={}", msg.getSubject());
   }
 
   public void clear() {

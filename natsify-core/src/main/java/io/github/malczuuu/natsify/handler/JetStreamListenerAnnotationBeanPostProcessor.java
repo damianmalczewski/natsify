@@ -31,7 +31,7 @@ import org.springframework.util.StringValueResolver;
 
 /**
  * Scans Spring beans for {@link JetStreamListener @JetStreamListener}-annotated methods and
- * registers them with {@link JetStreamListenerRegistry}.
+ * registers them with {@link JetStreamListenerEndpointRegistry}.
  *
  * @since 0.1.0
  */
@@ -41,7 +41,7 @@ public class JetStreamListenerAnnotationBeanPostProcessor
   private static final Logger log =
       LoggerFactory.getLogger(JetStreamListenerAnnotationBeanPostProcessor.class);
 
-  private final JetStreamListenerRegistry registry;
+  private final JetStreamListenerEndpointRegistry registry;
 
   private StringValueResolver valueResolver = value -> value;
 
@@ -51,7 +51,7 @@ public class JetStreamListenerAnnotationBeanPostProcessor
    * @param registry registry to register discovered listeners with
    * @since 0.1.0
    */
-  public JetStreamListenerAnnotationBeanPostProcessor(JetStreamListenerRegistry registry) {
+  public JetStreamListenerAnnotationBeanPostProcessor(JetStreamListenerEndpointRegistry registry) {
     this.registry = registry;
   }
 
@@ -68,7 +68,7 @@ public class JetStreamListenerAnnotationBeanPostProcessor
 
   /**
    * Scans the bean for {@link JetStreamListener @JetStreamListener} methods and registers each as a
-   * {@link JetStreamListenerDetails}.
+   * {@link JetStreamListenerEndpoint}.
    *
    * @param bean the bean instance
    * @param beanName the bean name
@@ -94,8 +94,8 @@ public class JetStreamListenerAnnotationBeanPostProcessor
       String queue = resolve(annotation.queue());
       String deadLetterSubject = resolve(annotation.deadLetterSubject());
 
-      JetStreamListenerDetails listener =
-          JetStreamListenerDetails.builder()
+      JetStreamListenerEndpoint endpoint =
+          JetStreamListenerEndpoint.builder()
               .withBean(bean)
               .withMethod(method)
               .withSubject(subject)
@@ -109,8 +109,8 @@ public class JetStreamListenerAnnotationBeanPostProcessor
               .withMaxDeliveries(annotation.maxDeliveries())
               .build();
 
-      registry.register(listener);
-      log.info("Registered @JetStreamListener to {}", listener);
+      registry.register(endpoint);
+      log.debug("Registered @JetStreamListener to endpoint={}", endpoint);
     }
 
     return bean;

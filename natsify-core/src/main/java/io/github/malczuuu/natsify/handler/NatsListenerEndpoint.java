@@ -30,7 +30,7 @@ import org.springframework.util.StringUtils;
  *
  * @since 0.1.0
  */
-public final class NatsListenerDetails {
+public final class NatsListenerEndpoint {
 
   private final Object bean;
   private final Method method;
@@ -38,7 +38,7 @@ public final class NatsListenerDetails {
   private final String queue;
   private final String deadLetterSubject;
 
-  private NatsListenerDetails(
+  private NatsListenerEndpoint(
       Object bean, Method method, String subject, String queue, String deadLetterSubject) {
     this.bean = bean;
     this.method = method;
@@ -98,21 +98,21 @@ public final class NatsListenerDetails {
   }
 
   /**
-   * Returns a string representation of this listener details.
+   * Returns a string representation of this listener endpoint.
    *
    * @return string representation
    * @since 0.1.0
    */
   @Override
   public String toString() {
-    return ("NatsListenerDetails[bean=" + AopUtils.getTargetClass(bean).getSimpleName())
+    return ("NatsListenerEndpoint[bean=" + AopUtils.getTargetClass(bean).getSimpleName())
         + (", method=" + method.getName())
         + (", subject=" + subject)
         + (", queue=" + queue + "]");
   }
 
   /**
-   * Returns a new {@link Builder} for constructing a {@link NatsListenerDetails} instance.
+   * Returns a new {@link Builder} for constructing a {@link NatsListenerEndpoint} instance.
    *
    * @return a new builder
    * @since 0.1.0
@@ -122,7 +122,7 @@ public final class NatsListenerDetails {
   }
 
   /**
-   * Builder for {@link NatsListenerDetails}.
+   * Builder for {@link NatsListenerEndpoint}.
    *
    * @since 0.1.0
    */
@@ -198,13 +198,13 @@ public final class NatsListenerDetails {
     }
 
     /**
-     * Builds the {@link NatsListenerDetails} instance.
+     * Builds the {@link NatsListenerEndpoint} instance.
      *
-     * @return a new {@link NatsListenerDetails}
+     * @return a new {@link NatsListenerEndpoint}
      * @throws IllegalArgumentException if configuration constraints are violated
      * @since 0.1.0
      */
-    public NatsListenerDetails build() {
+    public NatsListenerEndpoint build() {
       if (bean == null) {
         throw new IllegalArgumentException("bean is required");
       }
@@ -218,7 +218,7 @@ public final class NatsListenerDetails {
         throw new IllegalArgumentException("queue is required");
       }
       validateNatsListenerMethod(method);
-      return new NatsListenerDetails(bean, method, subject, queue, deadLetterSubject);
+      return new NatsListenerEndpoint(bean, method, subject, queue, deadLetterSubject);
     }
   }
 }

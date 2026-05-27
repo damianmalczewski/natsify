@@ -21,42 +21,41 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Thread-safe {@link JetStreamListenerRegistry} backed by a {@link CopyOnWriteArrayList}.
+ * Thread-safe registry for {@link NatsListenerEndpoint} instances backed by a {@link
+ * CopyOnWriteArrayList}.
  *
  * @since 0.1.0
  */
-public final class SimpleJetStreamListenerRegistry implements JetStreamListenerRegistry {
+public class NatsListenerEndpointRegistry {
 
-  private final List<JetStreamListenerDetails> listeners = new CopyOnWriteArrayList<>();
+  private final List<NatsListenerEndpoint> listeners = new CopyOnWriteArrayList<>();
 
   /**
-   * Creates a new {@code SimpleJetStreamListenerRegistry}.
+   * Creates a new {@code NatsListenerEndpointRegistry}.
    *
    * @since 0.1.0
    */
-  public SimpleJetStreamListenerRegistry() {}
+  public NatsListenerEndpointRegistry() {}
 
   /**
-   * Registers a listener. Also marks the listener method as accessible to support non-public
-   * methods.
+   * Registers a listener endpoint. Also marks the listener method as accessible to support
+   * non-public methods.
    *
-   * @param listener the listener details to register
+   * @param endpoint the listener endpoint to register
    * @since 0.1.0
    */
-  @Override
-  public void register(JetStreamListenerDetails listener) {
-    listener.getMethod().setAccessible(true);
-    listeners.add(listener);
+  public void register(NatsListenerEndpoint endpoint) {
+    endpoint.getMethod().setAccessible(true);
+    listeners.add(endpoint);
   }
 
   /**
    * Returns all registered listeners.
    *
-   * @return immutable list of registered listener details
+   * @return immutable list of registered listener endpoints
    * @since 0.1.0
    */
-  @Override
-  public List<JetStreamListenerDetails> getListeners() {
+  public List<NatsListenerEndpoint> getEndpoints() {
     return Collections.unmodifiableList(listeners);
   }
 }

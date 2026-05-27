@@ -101,7 +101,7 @@ public final class JetStreamConfigurer implements JetStreamManager {
           StreamInfo info = management.getStreamInfo(stream.getName());
 
           if (info != null) {
-            log.info("JetStream stream {} already exists, skipping", stream.getName());
+            log.info("JetStream stream={} already exists, skipping", stream.getName());
             continue;
           }
         } catch (JetStreamApiException e) {
@@ -112,9 +112,9 @@ public final class JetStreamConfigurer implements JetStreamManager {
 
         try {
           management.addStream(stream);
-          log.info("Created JetStream stream {}", stream.getName());
+          log.info("Created JetStream stream={}", stream.getName());
         } catch (Exception e) {
-          log.error("Failed to create JetStream stream {}", stream.getName(), e);
+          log.error("Failed to create JetStream stream={}", stream.getName(), e);
           throw e;
         }
       }

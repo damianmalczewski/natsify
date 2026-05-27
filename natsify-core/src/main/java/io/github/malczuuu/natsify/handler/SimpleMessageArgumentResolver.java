@@ -41,7 +41,7 @@ import tools.jackson.databind.json.JsonMapper;
  *
  * @since 0.1.0
  */
-public class SimpleMessageArgumentResolver implements MessageArgumentResolver {
+public final class SimpleMessageArgumentResolver implements MessageArgumentResolver {
 
   private final JsonMapper jsonMapper;
 

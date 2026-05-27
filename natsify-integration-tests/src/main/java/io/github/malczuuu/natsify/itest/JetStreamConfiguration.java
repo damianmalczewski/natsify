@@ -14,7 +14,17 @@
  * limitations under the License.
  */
 
-@NullMarked
-package io.github.malczuuu.natsify.itest.infra;
+package io.github.malczuuu.natsify.itest;
 
-import org.jspecify.annotations.NullMarked;
+import io.nats.client.api.StreamConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class JetStreamConfiguration {
+
+  @Bean
+  StreamConfiguration telemetryStreamConfiguration() {
+    return StreamConfiguration.builder().name("TEST").subjects("js.>").build();
+  }
+}

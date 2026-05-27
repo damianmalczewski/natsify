@@ -54,8 +54,8 @@ class JetStreamPushHandlerTests {
     Dispatcher dispatcher = Mockito.mock(Dispatcher.class);
     when(connection.createDispatcher()).thenReturn(dispatcher);
 
-    JetStreamListenerDetails listener =
-        JetStreamListenerDetails.builder()
+    JetStreamListenerEndpoint endpoint =
+        JetStreamListenerEndpoint.builder()
             .withBean(new Object())
             .withMethod(METHOD)
             .withSubject("test.subject")
@@ -69,7 +69,7 @@ class JetStreamPushHandlerTests {
 
     handler =
         new JetStreamPushHandler(
-            connection, stream, listener, ConsumerConfiguration.builder().build(), msg -> {});
+            connection, stream, endpoint, ConsumerConfiguration.builder().build(), msg -> {});
   }
 
   @Test

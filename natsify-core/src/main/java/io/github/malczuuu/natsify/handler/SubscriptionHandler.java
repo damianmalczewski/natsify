@@ -31,16 +31,16 @@ final class SubscriptionHandler implements NatsListenerHandler {
   private static final Logger log = LoggerFactory.getLogger(SubscriptionHandler.class);
 
   private final Connection connection;
-  private final NatsListenerDetails listener;
+  private final NatsListenerEndpoint endpoint;
   private final Consumer<Message> messageConsumer;
 
   private volatile boolean running = false;
   private volatile @Nullable Dispatcher dispatcher = null;
 
   SubscriptionHandler(
-      Connection connection, NatsListenerDetails listener, Consumer<Message> messageConsumer) {
+      Connection connection, NatsListenerEndpoint endpoint, Consumer<Message> messageConsumer) {
     this.connection = connection;
-    this.listener = listener;
+    this.endpoint = endpoint;
     this.messageConsumer = messageConsumer;
   }
 
@@ -54,13 +54,13 @@ final class SubscriptionHandler implements NatsListenerHandler {
 
     Dispatcher dispatcher = connection.createDispatcher(messageConsumer::accept);
     this.dispatcher = dispatcher;
-    if (listener.getQueue().isEmpty()) {
-      dispatcher.subscribe(listener.getSubject());
-      log.info("Subscribed to NATS subject {}", listener.getSubject());
+    if (endpoint.getQueue().isEmpty()) {
+      dispatcher.subscribe(endpoint.getSubject());
+      log.info("Subscribed to NATS subject={}", endpoint.getSubject());
     } else {
-      dispatcher.subscribe(listener.getSubject(), listener.getQueue());
+      dispatcher.subscribe(endpoint.getSubject(), endpoint.getQueue());
       log.info(
-          "Subscribed to NATS subject {}, queue {}", listener.getSubject(), listener.getQueue());
+          "Subscribed to NATS subject={}, queue={}", endpoint.getSubject(), endpoint.getQueue());
     }
     running = true;
   }
@@ -75,7 +75,7 @@ final class SubscriptionHandler implements NatsListenerHandler {
 
     Dispatcher dispatcher = this.dispatcher;
     if (dispatcher != null) {
-      dispatcher.unsubscribe(listener.getSubject());
+      dispatcher.unsubscribe(endpoint.getSubject());
       connection.closeDispatcher(dispatcher);
       this.dispatcher = null;
     }
@@ -84,9 +84,9 @@ final class SubscriptionHandler implements NatsListenerHandler {
   @Override
   public String toString() {
     return "SubscriptionHandler["
-        + AopUtils.getTargetClass(listener.getBean()).getSimpleName()
+        + AopUtils.getTargetClass(endpoint.getBean()).getSimpleName()
         + "."
-        + listener.getMethod().getName()
+        + endpoint.getMethod().getName()
         + "]";
   }
 }

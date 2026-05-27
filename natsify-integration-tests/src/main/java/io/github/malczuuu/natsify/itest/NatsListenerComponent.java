@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package io.github.malczuuu.natsify.itest.infra;
+package io.github.malczuuu.natsify.itest;
 
 import io.github.malczuuu.natsify.annotation.NatsHeader;
 import io.github.malczuuu.natsify.annotation.NatsHeaders;
 import io.github.malczuuu.natsify.annotation.NatsListener;
 import io.github.malczuuu.natsify.annotation.NatsPayload;
-import io.github.malczuuu.natsify.itest.model.SampleMessage;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
 import java.util.List;

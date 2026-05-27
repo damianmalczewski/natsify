@@ -16,25 +16,23 @@
 
 package io.github.malczuuu.natsify.autoconfigure;
 
-import io.github.malczuuu.natsify.connection.ConnectionConfigurer;
 import io.github.malczuuu.natsify.connection.ConnectionManager;
 import io.github.malczuuu.natsify.connection.ConnectionOptionsBuilderCustomizer;
 import io.github.malczuuu.natsify.connection.ConnectionOptionsFactory;
 import io.github.malczuuu.natsify.connection.CustomizableOptionsFactory;
+import io.github.malczuuu.natsify.connection.DefaultConnectionManager;
 import io.github.malczuuu.natsify.connection.JetStreamConfigurer;
 import io.github.malczuuu.natsify.connection.JetStreamManager;
 import io.github.malczuuu.natsify.core.NatsOperations;
 import io.github.malczuuu.natsify.core.NatsTemplate;
 import io.github.malczuuu.natsify.handler.JetStreamListenerAnnotationBeanPostProcessor;
-import io.github.malczuuu.natsify.handler.JetStreamListenerManager;
-import io.github.malczuuu.natsify.handler.JetStreamListenerRegistry;
+import io.github.malczuuu.natsify.handler.JetStreamListenerEndpointRegistry;
+import io.github.malczuuu.natsify.handler.JetStreamMessageListenerContainer;
 import io.github.malczuuu.natsify.handler.MessageArgumentResolver;
 import io.github.malczuuu.natsify.handler.NatsListenerAnnotationBeanPostProcessor;
-import io.github.malczuuu.natsify.handler.NatsListenerManager;
-import io.github.malczuuu.natsify.handler.NatsListenerRegistry;
-import io.github.malczuuu.natsify.handler.SimpleJetStreamListenerRegistry;
+import io.github.malczuuu.natsify.handler.NatsListenerEndpointRegistry;
+import io.github.malczuuu.natsify.handler.NatsMessageListenerContainer;
 import io.github.malczuuu.natsify.handler.SimpleMessageArgumentResolver;
-import io.github.malczuuu.natsify.handler.SimpleNatsListenerRegistry;
 import io.github.malczuuu.natsify.instrument.JetStreamListenerObserver;
 import io.github.malczuuu.natsify.instrument.NatsConnectionObserver;
 import io.github.malczuuu.natsify.instrument.NatsListenerObserver;
@@ -118,22 +116,23 @@ public final class NatsAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean(ConnectionManager.class)
-  ConnectionConfigurer natsConnectionConfigurer(
+  DefaultConnectionManager natsDefaultConnectionManager(
       NatsProperties properties,
       ConnectionOptionsFactory connectionOptionsFactory,
-      NatsListenerRegistry natsListenerRegistry,
-      JetStreamListenerRegistry jetStreamListenerRegistry,
+      NatsListenerEndpointRegistry natsListenerEndpointRegistry,
+      JetStreamListenerEndpointRegistry jetStreamListenerEndpointRegistry,
       NatsListenerObserver natsListenerObserver,
       JetStreamListenerObserver jetStreamListenerObserver,
       NatsConnectionObserver natsConnectionObserver,
       JsonMapper jsonMapper) {
     MessageArgumentResolver argumentResolver = new SimpleMessageArgumentResolver(jsonMapper);
-    return new ConnectionConfigurer(
+    return new DefaultConnectionManager(
         connectionOptionsFactory.getOptions(),
         List.of(
-            new NatsListenerManager(natsListenerRegistry, argumentResolver, natsListenerObserver),
-            new JetStreamListenerManager(
-                jetStreamListenerRegistry,
+            new NatsMessageListenerContainer(
+                natsListenerEndpointRegistry, argumentResolver, natsListenerObserver),
+            new JetStreamMessageListenerContainer(
+                jetStreamListenerEndpointRegistry,
                 argumentResolver,
                 jetStreamListenerObserver,
                 properties.getPullFetchBatchSize(),
@@ -160,32 +159,32 @@ public final class NatsAutoConfiguration {
   }
 
   @Bean
-  @ConditionalOnMissingBean(NatsListenerRegistry.class)
+  @ConditionalOnMissingBean(NatsListenerEndpointRegistry.class)
   @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-  static SimpleNatsListenerRegistry simpleNatsListenerRegistry() {
-    return new SimpleNatsListenerRegistry();
+  static NatsListenerEndpointRegistry natsListenerEndpointRegistry() {
+    return new NatsListenerEndpointRegistry();
   }
 
   @Bean
-  @ConditionalOnMissingBean(JetStreamListenerRegistry.class)
+  @ConditionalOnMissingBean(JetStreamListenerEndpointRegistry.class)
   @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-  static SimpleJetStreamListenerRegistry simpleJetStreamListenerRegistry() {
-    return new SimpleJetStreamListenerRegistry();
+  static JetStreamListenerEndpointRegistry jetStreamListenerEndpointRegistry() {
+    return new JetStreamListenerEndpointRegistry();
   }
 
   @Bean
   @ConditionalOnMissingBean(NatsListenerAnnotationBeanPostProcessor.class)
   @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
   static NatsListenerAnnotationBeanPostProcessor natsListenerAnnotationBeanPostProcessor(
-      NatsListenerRegistry natsListenerRegistry) {
-    return new NatsListenerAnnotationBeanPostProcessor(natsListenerRegistry);
+      NatsListenerEndpointRegistry natsListenerEndpointRegistry) {
+    return new NatsListenerAnnotationBeanPostProcessor(natsListenerEndpointRegistry);
   }
 
   @Bean
   @ConditionalOnMissingBean(JetStreamListenerAnnotationBeanPostProcessor.class)
   @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
   static JetStreamListenerAnnotationBeanPostProcessor jetStreamListenerAnnotationBeanPostProcessor(
-      JetStreamListenerRegistry jetStreamListenerRegistry) {
-    return new JetStreamListenerAnnotationBeanPostProcessor(jetStreamListenerRegistry);
+      JetStreamListenerEndpointRegistry jetStreamListenerEndpointRegistry) {
+    return new JetStreamListenerAnnotationBeanPostProcessor(jetStreamListenerEndpointRegistry);
   }
 }

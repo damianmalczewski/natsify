@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package io.github.malczuuu.natsify.itest.infra;
+package io.github.malczuuu.natsify.itest;
 
 import io.github.malczuuu.natsify.annotation.AckMode;
 import io.github.malczuuu.natsify.annotation.ConsumerType;
 import io.github.malczuuu.natsify.annotation.JetStreamListener;
-import io.github.malczuuu.natsify.itest.model.SampleMessage;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
 import io.nats.client.impl.NatsJetStreamMetaData;

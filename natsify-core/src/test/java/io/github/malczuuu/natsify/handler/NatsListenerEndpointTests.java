@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 
-class NatsListenerDetailsTests {
+class NatsListenerEndpointTests {
 
   private static final Object BEAN = new Object();
   private static final Method METHOD;
@@ -37,8 +37,8 @@ class NatsListenerDetailsTests {
 
   @Test
   void givenAllFields_whenBuild_thenHandleCreatedWithCorrectValues() {
-    NatsListenerDetails listener =
-        NatsListenerDetails.builder()
+    NatsListenerEndpoint endpoint =
+        NatsListenerEndpoint.builder()
             .withBean(BEAN)
             .withMethod(METHOD)
             .withSubject("orders.placed")
@@ -46,31 +46,31 @@ class NatsListenerDetailsTests {
             .withDeadLetterSubject("orders.placed.dlq")
             .build();
 
-    assertThat(listener.getBean()).isSameAs(BEAN);
-    assertThat(listener.getMethod()).isSameAs(METHOD);
-    assertThat(listener.getSubject()).isEqualTo("orders.placed");
-    assertThat(listener.getQueue()).isEqualTo("processors");
-    assertThat(listener.getDeadLetterSubject()).isEqualTo("orders.placed.dlq");
+    assertThat(endpoint.getBean()).isSameAs(BEAN);
+    assertThat(endpoint.getMethod()).isSameAs(METHOD);
+    assertThat(endpoint.getSubject()).isEqualTo("orders.placed");
+    assertThat(endpoint.getQueue()).isEqualTo("processors");
+    assertThat(endpoint.getDeadLetterSubject()).isEqualTo("orders.placed.dlq");
   }
 
   @Test
   void givenNoDeadLetterSubject_whenBuild_thenDeadLetterSubjectIsEmpty() {
-    NatsListenerDetails listener =
-        NatsListenerDetails.builder()
+    NatsListenerEndpoint endpoint =
+        NatsListenerEndpoint.builder()
             .withBean(BEAN)
             .withMethod(METHOD)
             .withSubject("orders.placed")
             .withQueue("processors")
             .build();
 
-    assertThat(listener.getDeadLetterSubject()).isEmpty();
+    assertThat(endpoint.getDeadLetterSubject()).isEmpty();
   }
 
   @Test
   void givenMissingBean_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
             () ->
-                NatsListenerDetails.builder()
+                NatsListenerEndpoint.builder()
                     .withMethod(METHOD)
                     .withSubject("orders.placed")
                     .withQueue("processors")
@@ -83,7 +83,7 @@ class NatsListenerDetailsTests {
   void givenMissingMethod_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
             () ->
-                NatsListenerDetails.builder()
+                NatsListenerEndpoint.builder()
                     .withBean(BEAN)
                     .withSubject("orders.placed")
                     .withQueue("processors")
@@ -96,7 +96,7 @@ class NatsListenerDetailsTests {
   void givenMissingSubject_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
             () ->
-                NatsListenerDetails.builder()
+                NatsListenerEndpoint.builder()
                     .withBean(BEAN)
                     .withMethod(METHOD)
                     .withQueue("processors")
@@ -109,7 +109,7 @@ class NatsListenerDetailsTests {
   void givenMissingQueue_whenBuild_thenThrowsIllegalArgumentException() {
     assertThatThrownBy(
             () ->
-                NatsListenerDetails.builder()
+                NatsListenerEndpoint.builder()
                     .withBean(BEAN)
                     .withMethod(METHOD)
                     .withSubject("orders.placed")

@@ -36,69 +36,75 @@ final class NatsListenerInvocation implements Consumer<Message> {
   private final Connection connection;
   private final MessageArgumentResolver argumentResolver;
   private final NatsListenerObserver observer;
-  private final NatsListenerDetails listener;
+  private final NatsListenerEndpoint endpoint;
 
   NatsListenerInvocation(
       Connection connection,
       MessageArgumentResolver argumentResolver,
       NatsListenerObserver observer,
-      NatsListenerDetails listener) {
+      NatsListenerEndpoint endpoint) {
     this.connection = connection;
     this.argumentResolver = argumentResolver;
     this.observer = observer;
-    this.listener = listener;
+    this.endpoint = endpoint;
   }
 
   @Override
   public void accept(Message msg) {
-    observer.onReceived(listener.getSubject(), listener.getQueue());
+    observer.onReceived(endpoint.getSubject(), endpoint.getQueue());
     long start = System.nanoTime();
     try {
       doAccept(msg);
     } finally {
-      observer.onProcessed(listener.getSubject(), listener.getQueue(), System.nanoTime() - start);
+      observer.onProcessed(endpoint.getSubject(), endpoint.getQueue(), System.nanoTime() - start);
     }
   }
 
   private void doAccept(Message msg) {
     Object[] args;
     try {
-      args = argumentResolver.resolveArguments(listener.getMethod().getParameters(), msg);
+      args = argumentResolver.resolveArguments(endpoint.getMethod().getParameters(), msg);
     } catch (Exception e) {
       log.error(
-          "Unable to resolve arguments for NATS listener {}.{}, dropping message, subject={}",
-          AopUtils.getTargetClass(listener.getBean()).getSimpleName(),
-          listener.getMethod().getName(),
+          "Unable to resolve arguments for NATS listener={}.{}, dropping message, subject={}",
+          AopUtils.getTargetClass(endpoint.getBean()).getSimpleName(),
+          endpoint.getMethod().getName(),
           msg.getSubject(),
           e);
-      observer.onFailed(listener.getSubject(), listener.getQueue());
+      observer.onFailed(endpoint.getSubject(), endpoint.getQueue());
       publishDeadLetter(msg, e);
       return;
     }
 
     try {
-      listener.getMethod().invoke(listener.getBean(), args);
-      observer.onSucceeded(listener.getSubject(), listener.getQueue());
+      endpoint.getMethod().invoke(endpoint.getBean(), args);
+      observer.onSucceeded(endpoint.getSubject(), endpoint.getQueue());
     } catch (InvocationTargetException | IllegalAccessException e) {
       Throwable cause = e instanceof InvocationTargetException ite ? ite.getCause() : e;
-      log.error("Failed to invoke handler for NATS listener {}", listener.getMethod(), cause);
-      observer.onFailed(listener.getSubject(), listener.getQueue());
+      log.error(
+          "Failed to invoke handler for NATS listener={}.{}",
+          AopUtils.getTargetClass(endpoint.getBean()).getSimpleName(),
+          endpoint.getMethod().getName(),
+          cause);
+      observer.onFailed(endpoint.getSubject(), endpoint.getQueue());
       publishDeadLetter(msg, cause instanceof Exception ex ? ex : e);
     }
   }
 
   private void publishDeadLetter(Message msg, Exception cause) {
-    if (listener.getDeadLetterSubject().isEmpty()) {
+    if (endpoint.getDeadLetterSubject().isEmpty()) {
       return;
     }
     try {
       Headers headers = buildDeadLetterHeaders(msg, msg.getSubject(), cause);
-      buildAndPublishDeadLetter(connection, listener.getDeadLetterSubject(), msg, headers);
-      observer.onDeadLettered(listener.getSubject(), listener.getQueue());
+      buildAndPublishDeadLetter(connection, endpoint.getDeadLetterSubject(), msg, headers);
+      observer.onDeadLettered(endpoint.getSubject(), endpoint.getQueue());
     } catch (Exception e) {
       log.error(
-          "Failed to publish dead-letter message to subject {}",
-          listener.getDeadLetterSubject(),
+          "Failed to publish dead-letter message to subject={}, listener={}.{}",
+          endpoint.getDeadLetterSubject(),
+          AopUtils.getTargetClass(endpoint.getBean()).getSimpleName(),
+          endpoint.getMethod().getName(),
           e);
     }
   }
@@ -106,9 +112,9 @@ final class NatsListenerInvocation implements Consumer<Message> {
   @Override
   public String toString() {
     return "NatsListenerInvocation["
-        + AopUtils.getTargetClass(listener.getBean()).getSimpleName()
+        + AopUtils.getTargetClass(endpoint.getBean()).getSimpleName()
         + "."
-        + listener.getMethod().getName()
+        + endpoint.getMethod().getName()
         + "]";
   }
 }

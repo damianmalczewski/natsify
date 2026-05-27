@@ -49,7 +49,7 @@ public class JetStreamListenerExample {
   @JetStreamListener(subject = "telemetry.>", stream = "TELEMETRY", durable = "telemetry-listener")
   public void onRecord(SenmlRecord record) {
     records.add(record);
-    log.info("Received telemetry on JetStreamListener - {}", record);
+    log.info("Received telemetry on JetStreamListener; record={}", record);
   }
 
   public void clear() {

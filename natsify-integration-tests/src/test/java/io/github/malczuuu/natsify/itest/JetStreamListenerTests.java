@@ -19,8 +19,6 @@ package io.github.malczuuu.natsify.itest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.malczuuu.natsify.core.NatsOperations;
-import io.github.malczuuu.natsify.itest.infra.JetStreamListenerComponent;
-import io.github.malczuuu.natsify.itest.model.SampleMessage;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
 import io.nats.client.impl.NatsJetStreamMetaData;

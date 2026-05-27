@@ -41,24 +41,23 @@ class SubscriptionHandlerTests {
     }
   }
 
-  private Connection connection;
   private SubscriptionHandler handler;
 
   @BeforeEach
   void setUp() {
-    connection = Mockito.mock(Connection.class);
+    Connection connection = Mockito.mock(Connection.class);
     Dispatcher dispatcher = Mockito.mock(Dispatcher.class);
     when(connection.createDispatcher(any())).thenReturn(dispatcher);
 
-    NatsListenerDetails listener =
-        NatsListenerDetails.builder()
+    NatsListenerEndpoint endpoint =
+        NatsListenerEndpoint.builder()
             .withBean(new Object())
             .withMethod(METHOD)
             .withSubject("test.subject")
             .withQueue("")
             .build();
 
-    handler = new SubscriptionHandler(connection, listener, msg -> {});
+    handler = new SubscriptionHandler(connection, endpoint, msg -> {});
   }
 
   @Test

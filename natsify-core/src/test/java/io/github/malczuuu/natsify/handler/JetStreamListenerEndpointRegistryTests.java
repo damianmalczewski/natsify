@@ -19,12 +19,15 @@ package io.github.malczuuu.natsify.handler;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.github.malczuuu.natsify.annotation.AckMode;
+import io.github.malczuuu.natsify.annotation.ConsumerType;
+import io.github.malczuuu.natsify.annotation.DeliverPolicyType;
 import java.lang.reflect.Method;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class SimpleNatsListenerRegistryTests {
+class JetStreamListenerEndpointRegistryTests {
 
   private static final Object BEAN = new Object();
   private static final Method METHOD;
@@ -37,63 +40,70 @@ class SimpleNatsListenerRegistryTests {
     }
   }
 
-  private SimpleNatsListenerRegistry registry;
+  private JetStreamListenerEndpointRegistry registry;
 
   @BeforeEach
   void setUp() {
-    registry = new SimpleNatsListenerRegistry();
+    registry = new JetStreamListenerEndpointRegistry();
   }
 
   @Test
   void givenEmptyRegistry_whenGetListeners_thenReturnsEmptyList() {
-    assertThat(registry.getListeners()).isEmpty();
+    assertThat(registry.getEndpoints()).isEmpty();
   }
 
   @Test
   void givenListener_whenRegister_thenListenerIsReturned() {
-    NatsListenerDetails listener = buildListener("orders.placed", "processors");
+    JetStreamListenerEndpoint endpoint =
+        buildListener("orders.placed", "orders", "order-processor");
 
-    registry.register(listener);
+    registry.register(endpoint);
 
-    assertThat(registry.getListeners()).containsExactly(listener);
+    assertThat(registry.getEndpoints()).containsExactly(endpoint);
   }
 
   @Test
   void givenMultipleListeners_whenRegister_thenAllListenersReturnedInOrder() {
-    NatsListenerDetails first = buildListener("orders.placed", "processors");
-    NatsListenerDetails second = buildListener("orders.shipped", "notifiers");
+    JetStreamListenerEndpoint first = buildListener("orders.placed", "orders", "order-processor");
+    JetStreamListenerEndpoint second =
+        buildListener("orders.shipped", "shipping", "ship-processor");
 
     registry.register(first);
     registry.register(second);
 
-    assertThat(registry.getListeners()).containsExactly(first, second);
+    assertThat(registry.getEndpoints()).containsExactly(first, second);
   }
 
   @Test
   void givenListener_whenGetListeners_thenReturnedListIsUnmodifiable() {
-    registry.register(buildListener("orders.placed", "processors"));
+    registry.register(buildListener("orders.placed", "orders", "order-processor"));
 
-    List<NatsListenerDetails> listeners = registry.getListeners();
+    List<JetStreamListenerEndpoint> listeners = registry.getEndpoints();
 
-    assertThatThrownBy(() -> listeners.add(buildListener("orders.shipped", "")))
+    assertThatThrownBy(() -> listeners.add(buildListener("orders.shipped", "shipping", "")))
         .isInstanceOf(UnsupportedOperationException.class);
   }
 
   @Test
   void givenListener_whenRegister_thenMethodIsAccessible() {
-    NatsListenerDetails listener = buildListener("orders.placed", "");
+    JetStreamListenerEndpoint endpoint = buildListener("orders.placed", "orders", "");
 
-    registry.register(listener);
+    registry.register(endpoint);
 
-    assertThat(listener.getMethod().canAccess(BEAN)).isTrue();
+    assertThat(endpoint.getMethod().canAccess(BEAN)).isTrue();
   }
 
-  private NatsListenerDetails buildListener(String subject, String queue) {
-    return NatsListenerDetails.builder()
+  private JetStreamListenerEndpoint buildListener(String subject, String stream, String durable) {
+    return JetStreamListenerEndpoint.builder()
         .withBean(BEAN)
         .withMethod(METHOD)
         .withSubject(subject)
-        .withQueue(queue)
+        .withStream(stream)
+        .withDurable(durable)
+        .withQueue("")
+        .withConsumerType(ConsumerType.PULL)
+        .withAckMode(AckMode.AUTO)
+        .withDeliverPolicy(DeliverPolicyType.NEW)
         .build();
   }
 }

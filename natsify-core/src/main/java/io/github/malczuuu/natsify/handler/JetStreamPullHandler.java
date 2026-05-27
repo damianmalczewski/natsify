@@ -37,7 +37,7 @@ final class JetStreamPullHandler implements JetStreamHandler {
   private static final Logger log = LoggerFactory.getLogger(JetStreamPullHandler.class);
 
   private final JetStream stream;
-  private final JetStreamListenerDetails listener;
+  private final JetStreamListenerEndpoint endpoint;
   private final ConsumerConfiguration configuration;
   private final Consumer<Message> messageConsumer;
 
@@ -50,13 +50,13 @@ final class JetStreamPullHandler implements JetStreamHandler {
 
   JetStreamPullHandler(
       JetStream stream,
-      JetStreamListenerDetails listener,
+      JetStreamListenerEndpoint endpoint,
       ConsumerConfiguration configuration,
       Consumer<Message> messageConsumer,
       int fetchBatchSize,
       Duration fetchTimeout) {
     this.stream = stream;
-    this.listener = listener;
+    this.endpoint = endpoint;
     this.configuration = configuration;
     this.messageConsumer = messageConsumer;
     this.fetchBatchSize = fetchBatchSize;
@@ -73,18 +73,18 @@ final class JetStreamPullHandler implements JetStreamHandler {
 
     PullSubscribeOptions.Builder builder =
         PullSubscribeOptions.builder().configuration(configuration);
-    if (!listener.getStream().isEmpty()) {
-      builder.stream(listener.getStream());
+    if (!endpoint.getStream().isEmpty()) {
+      builder.stream(endpoint.getStream());
     }
-    subscription = stream.subscribe(listener.getSubject(), builder.build());
+    subscription = stream.subscribe(endpoint.getSubject(), builder.build());
 
-    Thread listenerThread = new Thread(this::runPollPool, "nats-pull-" + listener.getSubject());
+    Thread listenerThread = new Thread(this::runPollPool, "nats-pull-" + endpoint.getSubject());
     this.listenerThread = listenerThread;
     listenerThread.setDaemon(true);
     running = true;
     listenerThread.start();
 
-    log.info("Subscribed pull JetStream listener to subject {}", listener.getSubject());
+    log.info("Subscribed pull JetStream listener to subject={}", endpoint.getSubject());
   }
 
   @Override
@@ -123,7 +123,7 @@ final class JetStreamPullHandler implements JetStreamHandler {
         if (!running || Thread.currentThread().isInterrupted()) {
           return;
         }
-        log.error("Error polling JetStream messages for subject {}", listener.getSubject(), e);
+        log.error("Error polling JetStream messages for subject={}", endpoint.getSubject(), e);
       }
     }
   }
@@ -131,9 +131,9 @@ final class JetStreamPullHandler implements JetStreamHandler {
   @Override
   public String toString() {
     return "JetStreamPullHandler["
-        + AopUtils.getTargetClass(listener.getBean()).getSimpleName()
+        + AopUtils.getTargetClass(endpoint.getBean()).getSimpleName()
         + "."
-        + listener.getMethod().getName()
+        + endpoint.getMethod().getName()
         + "]";
   }
 }

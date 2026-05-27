@@ -23,28 +23,28 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Manages NATS Core subscription handlers for registered {@link NatsListenerDetails listeners}.
+ * Manages NATS Core subscription handlers for registered {@link NatsListenerEndpoint endpoints}.
  *
  * @since 0.1.0
  */
-public class NatsListenerManager implements ListenerManager {
+public class NatsMessageListenerContainer implements MessageListenerContainer {
 
-  private final NatsListenerRegistry registry;
+  private final NatsListenerEndpointRegistry registry;
   private final MessageArgumentResolver argumentResolver;
   private final NatsListenerObserver observer;
 
   private final List<NatsListenerHandler> handlers = new CopyOnWriteArrayList<>();
 
   /**
-   * Creates a new {@code NatsListenerManager}.
+   * Creates a new {@code NatsMessageListenerContainer}.
    *
-   * @param registry registry of listener details to initialize
+   * @param registry registry of listener endpoints to initialize
    * @param argumentResolver resolver used to map message data to handler method arguments
    * @param observer observer notified on listener invocations
    * @since 0.1.0
    */
-  public NatsListenerManager(
-      NatsListenerRegistry registry,
+  public NatsMessageListenerContainer(
+      NatsListenerEndpointRegistry registry,
       MessageArgumentResolver argumentResolver,
       NatsListenerObserver observer) {
     this.registry = registry;
@@ -54,7 +54,7 @@ public class NatsListenerManager implements ListenerManager {
 
   /**
    * Initializes and starts all handlers using the given NATS connection. Creates a subscription
-   * handler for each registered {@link NatsListenerDetails}.
+   * handler for each registered {@link NatsListenerEndpoint}.
    *
    * @param connection the active NATS connection
    * @throws Exception if any handler fails to start
@@ -62,12 +62,12 @@ public class NatsListenerManager implements ListenerManager {
    */
   @Override
   public synchronized void start(Connection connection) throws Exception {
-    for (NatsListenerDetails listener : registry.getListeners()) {
+    for (NatsListenerEndpoint endpoint : registry.getEndpoints()) {
       NatsListenerHandler handler =
           new SubscriptionHandler(
               connection,
-              listener,
-              new NatsListenerInvocation(connection, argumentResolver, observer, listener));
+              endpoint,
+              new NatsListenerInvocation(connection, argumentResolver, observer, endpoint));
       handlers.add(handler);
       handler.start();
     }

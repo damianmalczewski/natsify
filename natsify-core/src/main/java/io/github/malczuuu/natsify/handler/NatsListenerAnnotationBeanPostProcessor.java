@@ -32,7 +32,7 @@ import org.springframework.util.StringValueResolver;
 
 /**
  * Scans Spring beans for {@link NatsListener @NatsListener}-annotated methods and registers them
- * with {@link NatsListenerRegistry}.
+ * with {@link NatsListenerEndpointRegistry}.
  *
  * @since 0.1.0
  */
@@ -42,7 +42,7 @@ public class NatsListenerAnnotationBeanPostProcessor
   private static final Logger log =
       LoggerFactory.getLogger(NatsListenerAnnotationBeanPostProcessor.class);
 
-  private final NatsListenerRegistry registry;
+  private final NatsListenerEndpointRegistry registry;
 
   private StringValueResolver valueResolver = value -> value;
 
@@ -52,7 +52,7 @@ public class NatsListenerAnnotationBeanPostProcessor
    * @param registry registry to register discovered listeners with
    * @since 0.1.0
    */
-  public NatsListenerAnnotationBeanPostProcessor(NatsListenerRegistry registry) {
+  public NatsListenerAnnotationBeanPostProcessor(NatsListenerEndpointRegistry registry) {
     this.registry = registry;
   }
 
@@ -69,7 +69,7 @@ public class NatsListenerAnnotationBeanPostProcessor
 
   /**
    * Scans the bean for {@link NatsListener @NatsListener} methods and registers each as a {@link
-   * NatsListenerDetails}.
+   * NatsListenerEndpoint}.
    *
    * @param bean the bean instance
    * @param beanName the bean name
@@ -95,8 +95,8 @@ public class NatsListenerAnnotationBeanPostProcessor
       String queue = resolve(annotation.queue());
       String deadLetterSubject = resolve(annotation.deadLetterSubject());
 
-      NatsListenerDetails listener =
-          NatsListenerDetails.builder()
+      NatsListenerEndpoint endpoint =
+          NatsListenerEndpoint.builder()
               .withBean(bean)
               .withMethod(method)
               .withSubject(subject)
@@ -104,8 +104,8 @@ public class NatsListenerAnnotationBeanPostProcessor
               .withDeadLetterSubject(deadLetterSubject)
               .build();
 
-      registry.register(listener);
-      log.info("Registered @NatsListener to {}", listener);
+      registry.register(endpoint);
+      log.debug("Registered @NatsListener to endpoint={}", endpoint);
     }
 
     return BeanPostProcessor.super.postProcessAfterInitialization(bean, beanName);

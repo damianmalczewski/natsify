@@ -19,7 +19,7 @@ package io.github.malczuuu.natsify.connection;
 import io.github.malczuuu.natsify.core.ConnectionException;
 import io.github.malczuuu.natsify.core.ListenerConfigureException;
 import io.github.malczuuu.natsify.core.NatsIntegrationException;
-import io.github.malczuuu.natsify.handler.ListenerManager;
+import io.github.malczuuu.natsify.handler.MessageListenerContainer;
 import io.github.malczuuu.natsify.instrument.NatsConnectionObserver;
 import io.nats.client.Connection;
 import io.nats.client.ConnectionListener;
@@ -48,32 +48,32 @@ import org.springframework.aop.support.AopUtils;
  *
  * @since 0.1.0
  */
-public final class ConnectionConfigurer
+public final class DefaultConnectionManager
     implements ConnectionManager, ConnectionListener, ErrorListener {
 
-  private static final Logger log = LoggerFactory.getLogger(ConnectionConfigurer.class);
+  private static final Logger log = LoggerFactory.getLogger(DefaultConnectionManager.class);
 
   private final Options options;
-  private final List<ListenerManager> listenerManagers;
+  private final List<MessageListenerContainer> containers;
   private final NatsConnectionObserver connectionObserver;
 
   private volatile boolean running = false;
   private volatile @Nullable Connection connection = null;
 
   /**
-   * Creates a new {@link ConnectionConfigurer}.
+   * Creates a new {@link DefaultConnectionManager}.
    *
    * @param options NATS connection options
-   * @param listenerManagers managers responsible for setting up annotation-based listeners
+   * @param containers listener containers responsible for setting up annotation-based listeners
    * @param connectionObserver observer for connection lifecycle events
    * @since 0.1.0
    */
-  public ConnectionConfigurer(
+  public DefaultConnectionManager(
       Options options,
-      List<ListenerManager> listenerManagers,
+      List<MessageListenerContainer> containers,
       NatsConnectionObserver connectionObserver) {
     this.options = options;
-    this.listenerManagers = List.copyOf(listenerManagers);
+    this.containers = List.copyOf(containers);
     this.connectionObserver = connectionObserver;
   }
 
@@ -89,7 +89,7 @@ public final class ConnectionConfigurer
       synchronized (this) {
         if (connection == null) {
           try {
-            log.info("Establishing NATS connection at {}", options.getServers());
+            log.info("Establishing NATS connection at servers={}", options.getServers());
             this.connection = Nats.connect(options);
           } catch (Exception e) {
             throw new ConnectionException("Failed to establish NATS connection", e);
@@ -101,7 +101,7 @@ public final class ConnectionConfigurer
   }
 
   /**
-   * Establishes the NATS connection and initializes all registered listener managers.
+   * Establishes the NATS connection and starts all registered listener containers.
    *
    * @since 0.1.0
    */
@@ -110,17 +110,17 @@ public final class ConnectionConfigurer
     Connection connection = getConnection();
     int started = 0;
     try {
-      for (ListenerManager listenerManager : listenerManagers) {
+      for (MessageListenerContainer container : containers) {
         log.info(
-            "Setting up annotation-based NATS listeners with {}",
-            AopUtils.getTargetClass(listenerManager).getSimpleName());
-        listenerManager.start(connection);
+            "Setting up annotation-based NATS listeners for type={}",
+            AopUtils.getTargetClass(container).getSimpleName());
+        container.start(connection);
         started++;
       }
     } catch (Exception e) {
       for (int i = started - 1; i >= 0; i--) {
         try {
-          listenerManagers.get(i).stop();
+          containers.get(i).stop();
         } catch (Exception suppressed) {
           e.addSuppressed(suppressed);
         }
@@ -134,23 +134,23 @@ public final class ConnectionConfigurer
   }
 
   /**
-   * Stops all listener managers in reverse registration order and closes the NATS connection.
+   * Stops all listener containers in reverse registration order and closes the NATS connection.
    *
    * @since 0.1.0
    */
   @Override
   public synchronized void stop() {
     running = false;
-    List<ListenerManager> listenerManagers = new ArrayList<>(this.listenerManagers);
-    Collections.reverse(listenerManagers);
-    for (ListenerManager listenerManager : listenerManagers) {
+    List<MessageListenerContainer> containers = new ArrayList<>(this.containers);
+    Collections.reverse(containers);
+    for (MessageListenerContainer container : containers) {
       log.info(
-          "Shutting down annotation-based NATS listeners with {}",
-          AopUtils.getTargetClass(listenerManager).getSimpleName());
-      listenerManager.stop();
+          "Shutting down annotation-based NATS listeners for type={}",
+          AopUtils.getTargetClass(container).getSimpleName());
+      container.stop();
     }
 
-    log.info("Closing NATS connection at {}", options.getServers());
+    log.info("Closing NATS connection at servers={}", options.getServers());
     try {
       Connection connection = this.connection;
       if (connection != null) {

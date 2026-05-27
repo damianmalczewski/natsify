@@ -30,13 +30,13 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Manages JetStream consumer handlers for registered {@link JetStreamListenerDetails listeners}.
+ * Manages JetStream consumer handlers for registered {@link JetStreamListenerEndpoint endpoints}.
  *
  * @since 0.1.0
  */
-public class JetStreamListenerManager implements ListenerManager {
+public class JetStreamMessageListenerContainer implements MessageListenerContainer {
 
-  private final JetStreamListenerRegistry registry;
+  private final JetStreamListenerEndpointRegistry registry;
   private final MessageArgumentResolver argumentResolver;
   private final JetStreamListenerObserver observer;
 
@@ -46,17 +46,17 @@ public class JetStreamListenerManager implements ListenerManager {
   private final List<JetStreamHandler> handlers = new CopyOnWriteArrayList<>();
 
   /**
-   * Creates a new {@code JetStreamListenerManager}.
+   * Creates a new {@code JetStreamMessageListenerContainer}.
    *
-   * @param registry registry of listener details to initialize
+   * @param registry registry of listener endpoints to initialize
    * @param argumentResolver resolver used to map message data to handler method arguments
    * @param observer observer notified on listener invocations
    * @param pullFetchBatchSize number of messages to fetch per poll cycle for pull consumers
    * @param pullFetchTimeout maximum time to wait for messages in each fetch call for pull consumers
    * @since 0.1.0
    */
-  public JetStreamListenerManager(
-      JetStreamListenerRegistry registry,
+  public JetStreamMessageListenerContainer(
+      JetStreamListenerEndpointRegistry registry,
       MessageArgumentResolver argumentResolver,
       JetStreamListenerObserver observer,
       int pullFetchBatchSize,
@@ -70,7 +70,7 @@ public class JetStreamListenerManager implements ListenerManager {
 
   /**
    * Initializes and starts all handlers using the given NATS connection. Creates a push or pull
-   * consumer handler for each registered {@link JetStreamListenerDetails}. Does nothing if no
+   * consumer handler for each registered {@link JetStreamListenerEndpoint}. Does nothing if no
    * listeners are registered.
    *
    * @param connection the active NATS connection
@@ -79,17 +79,17 @@ public class JetStreamListenerManager implements ListenerManager {
    */
   @Override
   public synchronized void start(Connection connection) throws Exception {
-    if (registry.getListeners().isEmpty()) {
+    if (registry.getEndpoints().isEmpty()) {
       return;
     }
     JetStream stream = connection.jetStream();
-    for (JetStreamListenerDetails listener : registry.getListeners()) {
-      ConsumerConfiguration configuration = buildConsumerConfiguration(listener);
+    for (JetStreamListenerEndpoint endpoint : registry.getEndpoints()) {
+      ConsumerConfiguration configuration = buildConsumerConfiguration(endpoint);
       JetStreamHandler handler;
-      if (listener.getConsumerType() == ConsumerType.PUSH) {
-        handler = createPushHandler(connection, listener, stream, configuration);
+      if (endpoint.getConsumerType() == ConsumerType.PUSH) {
+        handler = createPushHandler(connection, endpoint, stream, configuration);
       } else {
-        handler = createPullHandler(connection, listener, stream, configuration);
+        handler = createPullHandler(connection, endpoint, stream, configuration);
       }
       handlers.add(handler);
       handler.start();
@@ -138,41 +138,41 @@ public class JetStreamListenerManager implements ListenerManager {
 
   private JetStreamPushHandler createPushHandler(
       Connection connection,
-      JetStreamListenerDetails listener,
+      JetStreamListenerEndpoint endpoint,
       JetStream stream,
       ConsumerConfiguration configuration) {
     return new JetStreamPushHandler(
         connection,
         stream,
-        listener,
+        endpoint,
         configuration,
-        new JetStreamInvocation(connection, argumentResolver, observer, listener));
+        new JetStreamInvocation(connection, argumentResolver, observer, endpoint));
   }
 
   private JetStreamPullHandler createPullHandler(
       Connection connection,
-      JetStreamListenerDetails listener,
+      JetStreamListenerEndpoint endpoint,
       JetStream stream,
       ConsumerConfiguration configuration) {
     return new JetStreamPullHandler(
         stream,
-        listener,
+        endpoint,
         configuration,
-        new JetStreamInvocation(connection, argumentResolver, observer, listener),
+        new JetStreamInvocation(connection, argumentResolver, observer, endpoint),
         pullFetchBatchSize,
         pullFetchTimeout);
   }
 
-  private ConsumerConfiguration buildConsumerConfiguration(JetStreamListenerDetails listener) {
+  private ConsumerConfiguration buildConsumerConfiguration(JetStreamListenerEndpoint endpoint) {
     ConsumerConfiguration.Builder builder =
         ConsumerConfiguration.builder()
-            .deliverPolicy(toDeliverPolicy(listener.getDeliverPolicy()))
+            .deliverPolicy(toDeliverPolicy(endpoint.getDeliverPolicy()))
             .ackPolicy(AckPolicy.Explicit);
-    if (!listener.getDurable().isEmpty()) {
-      builder.durable(listener.getDurable());
+    if (!endpoint.getDurable().isEmpty()) {
+      builder.durable(endpoint.getDurable());
     }
-    if (listener.getMaxDeliveries() > 0) {
-      builder.maxDeliver(listener.getMaxDeliveries());
+    if (endpoint.getMaxDeliveries() > 0) {
+      builder.maxDeliver(endpoint.getMaxDeliveries());
     }
     return builder.build();
   }

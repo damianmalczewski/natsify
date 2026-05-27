@@ -38,7 +38,7 @@ final class JetStreamInvocation implements Consumer<Message> {
   private static final Logger log = LoggerFactory.getLogger(JetStreamInvocation.class);
 
   private final Connection connection;
-  private final JetStreamListenerDetails listener;
+  private final JetStreamListenerEndpoint endpoint;
   private final MessageArgumentResolver messageArgumentResolver;
   private final JetStreamListenerObserver observer;
 
@@ -46,81 +46,84 @@ final class JetStreamInvocation implements Consumer<Message> {
       Connection connection,
       MessageArgumentResolver argumentResolver,
       JetStreamListenerObserver observer,
-      JetStreamListenerDetails listener) {
+      JetStreamListenerEndpoint endpoint) {
     this.connection = connection;
     this.messageArgumentResolver = argumentResolver;
     this.observer = observer;
-    this.listener = listener;
+    this.endpoint = endpoint;
   }
 
   @Override
   public void accept(Message msg) {
-    observer.onReceived(listener.getSubject(), listener.getStream());
+    observer.onReceived(endpoint.getSubject(), endpoint.getStream());
     long start = System.nanoTime();
     try {
       doAccept(msg);
     } catch (Exception e) {
       msg.nak();
     } finally {
-      observer.onProcessed(listener.getSubject(), listener.getStream(), System.nanoTime() - start);
+      observer.onProcessed(endpoint.getSubject(), endpoint.getStream(), System.nanoTime() - start);
     }
   }
 
   private void doAccept(Message msg) {
     Object[] args;
     try {
-      args = messageArgumentResolver.resolveArguments(listener.getMethod().getParameters(), msg);
+      args = messageArgumentResolver.resolveArguments(endpoint.getMethod().getParameters(), msg);
     } catch (Exception e) {
       logResolutionException(msg, e);
-      if (!listener.getDeadLetterSubject().isEmpty()) {
+      if (!endpoint.getDeadLetterSubject().isEmpty()) {
         publishDeadLetter(msg, e);
-        observer.onDeadLettered(listener.getSubject(), listener.getStream());
+        observer.onDeadLettered(endpoint.getSubject(), endpoint.getStream());
       }
       msg.term();
-      observer.onTerminated(listener.getSubject(), listener.getStream(), e);
+      observer.onTerminated(endpoint.getSubject(), endpoint.getStream(), e);
       return;
     }
 
     try {
-      listener.getMethod().invoke(listener.getBean(), args);
-      if (listener.getAckMode() == AckMode.AUTO) {
+      endpoint.getMethod().invoke(endpoint.getBean(), args);
+      if (endpoint.getAckMode() == AckMode.AUTO) {
         msg.ack();
-        observer.onAcked(listener.getSubject(), listener.getStream());
+        observer.onAcked(endpoint.getSubject(), endpoint.getStream());
       }
     } catch (InvocationTargetException | IllegalAccessException e) {
       Throwable cause = e instanceof InvocationTargetException ite ? ite.getCause() : e;
       log.error(
-          "Failed to invoke handler for NATS JetStream listener {}", listener.getMethod(), cause);
-      if (listener.getAckMode() == AckMode.AUTO) {
+          "Failed to invoke handler for NATS JetStream listener={}.{}",
+          AopUtils.getTargetClass(endpoint.getBean()).getSimpleName(),
+          endpoint.getMethod().getName(),
+          cause);
+      if (endpoint.getAckMode() == AckMode.AUTO) {
         if (isLastDelivery(msg)) {
           publishDeadLetter(msg, cause instanceof Exception ex ? ex : e);
-          observer.onDeadLettered(listener.getSubject(), listener.getStream());
+          observer.onDeadLettered(endpoint.getSubject(), endpoint.getStream());
           msg.term();
         } else {
           msg.nak();
-          observer.onNacked(listener.getSubject(), listener.getStream());
+          observer.onNacked(endpoint.getSubject(), endpoint.getStream());
         }
       }
     }
   }
 
   private boolean isLastDelivery(Message msg) {
-    if (listener.getDeadLetterSubject().isEmpty()) {
+    if (endpoint.getDeadLetterSubject().isEmpty()) {
       return false;
     }
     NatsJetStreamMetaData meta = msg.metaData();
-    return meta != null && meta.deliveredCount() >= listener.getMaxDeliveries();
+    return meta != null && meta.deliveredCount() >= endpoint.getMaxDeliveries();
   }
 
   private void publishDeadLetter(Message msg, @Nullable Exception cause) {
     Headers headers = buildDeadLetterHeaders(msg, msg.getSubject(), cause);
-    headers.add("X-Dead-Letter-Stream", listener.getStream());
-    headers.add("X-Dead-Letter-Durable", listener.getDurable());
+    headers.add("X-Dead-Letter-Stream", endpoint.getStream());
+    headers.add("X-Dead-Letter-Durable", endpoint.getDurable());
     NatsJetStreamMetaData meta = msg.metaData();
     if (meta != null) {
       headers.add("X-Dead-Letter-Delivery", String.valueOf(meta.deliveredCount()));
     }
-    buildAndPublishDeadLetter(connection, listener.getDeadLetterSubject(), msg, headers);
+    buildAndPublishDeadLetter(connection, endpoint.getDeadLetterSubject(), msg, headers);
   }
 
   private void logResolutionException(Message msg, Exception e) {
@@ -139,9 +142,9 @@ final class JetStreamInvocation implements Consumer<Message> {
     }
 
     log.error(
-        "Unable to resolve arguments for NATS JetStream handler {}.{}, terminating message, subject={}, stream={}, streamSequence={}, consumerSequence={}, deliveredCount={}, timestamp={}",
-        AopUtils.getTargetClass(listener.getBean()).getSimpleName(),
-        listener.getMethod().getName(),
+        "Unable to resolve arguments for NATS JetStream listener={}.{}, terminating message, subject={}, stream={}, streamSequence={}, consumerSequence={}, deliveredCount={}, timestamp={}",
+        AopUtils.getTargetClass(endpoint.getBean()).getSimpleName(),
+        endpoint.getMethod().getName(),
         msg.getSubject(),
         stream,
         streamSequence,
@@ -154,9 +157,9 @@ final class JetStreamInvocation implements Consumer<Message> {
   @Override
   public String toString() {
     return "JetStreamInvocation["
-        + AopUtils.getTargetClass(listener.getBean()).getSimpleName()
+        + AopUtils.getTargetClass(endpoint.getBean()).getSimpleName()
         + "."
-        + listener.getMethod().getName()
+        + endpoint.getMethod().getName()
         + "]";
   }
 }

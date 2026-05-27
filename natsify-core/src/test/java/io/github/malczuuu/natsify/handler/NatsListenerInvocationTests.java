@@ -183,24 +183,24 @@ class NatsListenerInvocationTests {
     verify(observer, never()).onDeadLettered(any(), any());
   }
 
-  private NatsListenerDetails handle(String methodName) {
+  private NatsListenerEndpoint handle(String methodName) {
     return handleWithQueue(methodName, "");
   }
 
-  private NatsListenerDetails handleWithQueue(String methodName, String queue) {
+  private NatsListenerEndpoint handleWithQueue(String methodName, String queue) {
     return handleWithQueueAndDeadLetter(methodName, queue, "");
   }
 
-  private NatsListenerDetails handleWithDeadLetter(String methodName, String deadLetterSubject) {
+  private NatsListenerEndpoint handleWithDeadLetter(String methodName, String deadLetterSubject) {
     return handleWithQueueAndDeadLetter(methodName, "", deadLetterSubject);
   }
 
-  private NatsListenerDetails handleWithQueueAndDeadLetter(
+  private NatsListenerEndpoint handleWithQueueAndDeadLetter(
       String methodName, String queue, String deadLetterSubject) {
     try {
       Method method = Listener.class.getDeclaredMethod(methodName);
       method.setAccessible(true);
-      return NatsListenerDetails.builder()
+      return NatsListenerEndpoint.builder()
           .withBean(listener)
           .withMethod(method)
           .withSubject("test-subject")

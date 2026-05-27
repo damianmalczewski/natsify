@@ -49,8 +49,8 @@ class JetStreamPullHandlerTests {
   void setUp() {
     JetStream stream = Mockito.mock(JetStream.class);
 
-    JetStreamListenerDetails listener =
-        JetStreamListenerDetails.builder()
+    JetStreamListenerEndpoint endpoint =
+        JetStreamListenerEndpoint.builder()
             .withBean(new Object())
             .withMethod(METHOD)
             .withSubject("test.subject")
@@ -65,7 +65,7 @@ class JetStreamPullHandlerTests {
     handler =
         new JetStreamPullHandler(
             stream,
-            listener,
+            endpoint,
             ConsumerConfiguration.builder().build(),
             msg -> {},
             200,

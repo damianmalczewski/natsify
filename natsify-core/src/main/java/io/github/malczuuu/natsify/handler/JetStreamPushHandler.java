@@ -38,7 +38,7 @@ final class JetStreamPushHandler implements JetStreamHandler {
 
   private final Connection connection;
   private final JetStream stream;
-  private final JetStreamListenerDetails listener;
+  private final JetStreamListenerEndpoint endpoint;
   private final ConsumerConfiguration configuration;
   private final Consumer<Message> messageConsumer;
 
@@ -49,12 +49,12 @@ final class JetStreamPushHandler implements JetStreamHandler {
   JetStreamPushHandler(
       Connection connection,
       JetStream stream,
-      JetStreamListenerDetails listener,
+      JetStreamListenerEndpoint endpoint,
       ConsumerConfiguration configuration,
       Consumer<Message> messageConsumer) {
     this.connection = connection;
     this.stream = stream;
-    this.listener = listener;
+    this.endpoint = endpoint;
     this.configuration = configuration;
     this.messageConsumer = messageConsumer;
   }
@@ -69,31 +69,31 @@ final class JetStreamPushHandler implements JetStreamHandler {
 
     PushSubscribeOptions.Builder builder =
         PushSubscribeOptions.builder().configuration(configuration);
-    if (!listener.getStream().isEmpty()) {
-      builder.stream(listener.getStream());
+    if (!endpoint.getStream().isEmpty()) {
+      builder.stream(endpoint.getStream());
     }
     PushSubscribeOptions options = builder.build();
     Dispatcher dispatcher = connection.createDispatcher();
     this.dispatcher = dispatcher;
     try {
-      if (listener.getQueue().isEmpty()) {
+      if (endpoint.getQueue().isEmpty()) {
         subscription =
             stream.subscribe(
-                listener.getSubject(), dispatcher, messageConsumer::accept, false, options);
-        log.info("Subscribed push JetStream listener to subject {}", listener.getSubject());
+                endpoint.getSubject(), dispatcher, messageConsumer::accept, false, options);
+        log.info("Subscribed push JetStream listener to subject={}", endpoint.getSubject());
       } else {
         subscription =
             stream.subscribe(
-                listener.getSubject(),
-                listener.getQueue(),
+                endpoint.getSubject(),
+                endpoint.getQueue(),
                 dispatcher,
                 messageConsumer::accept,
                 false,
                 options);
         log.info(
-            "Subscribed push JetStream listener to subject {}, queue {}",
-            listener.getSubject(),
-            listener.getQueue());
+            "Subscribed push JetStream listener to subject={}, queue={}",
+            endpoint.getSubject(),
+            endpoint.getQueue());
       }
     } catch (Exception e) {
       connection.closeDispatcher(dispatcher);
@@ -127,9 +127,9 @@ final class JetStreamPushHandler implements JetStreamHandler {
   @Override
   public String toString() {
     return "JetStreamPushHandler["
-        + AopUtils.getTargetClass(listener.getBean()).getSimpleName()
+        + AopUtils.getTargetClass(endpoint.getBean()).getSimpleName()
         + "."
-        + listener.getMethod().getName()
+        + endpoint.getMethod().getName()
         + "]";
   }
 }

@@ -34,7 +34,7 @@ import org.springframework.util.StringUtils;
  *
  * @since 0.1.0
  */
-public final class JetStreamListenerDetails {
+public final class JetStreamListenerEndpoint {
 
   private final Object bean;
   private final Method method;
@@ -48,7 +48,7 @@ public final class JetStreamListenerDetails {
   private final String deadLetterSubject;
   private final int maxDeliveries;
 
-  private JetStreamListenerDetails(
+  private JetStreamListenerEndpoint(
       Object bean,
       Method method,
       String subject,
@@ -186,14 +186,14 @@ public final class JetStreamListenerDetails {
   }
 
   /**
-   * Returns a string representation of this listener details.
+   * Returns a string representation of this listener endpoint.
    *
    * @return string representation
    * @since 0.1.0
    */
   @Override
   public String toString() {
-    return ("JetStreamListenerDetails[bean=" + AopUtils.getTargetClass(bean).getSimpleName())
+    return ("JetStreamListenerEndpoint[bean=" + AopUtils.getTargetClass(bean).getSimpleName())
         + (", method=" + method.getName())
         + (", subject=" + subject)
         + (", stream=" + stream)
@@ -207,7 +207,7 @@ public final class JetStreamListenerDetails {
   }
 
   /**
-   * Returns a new {@link Builder} for constructing a {@link JetStreamListenerDetails} instance.
+   * Returns a new {@link Builder} for constructing a {@link JetStreamListenerEndpoint} instance.
    *
    * @return a new builder
    * @since 0.1.0
@@ -217,7 +217,7 @@ public final class JetStreamListenerDetails {
   }
 
   /**
-   * Builder for {@link JetStreamListenerDetails}.
+   * Builder for {@link JetStreamListenerEndpoint}.
    *
    * @since 0.1.0
    */
@@ -371,13 +371,13 @@ public final class JetStreamListenerDetails {
     }
 
     /**
-     * Builds the {@link JetStreamListenerDetails} instance.
+     * Builds the {@link JetStreamListenerEndpoint} instance.
      *
-     * @return a new {@link JetStreamListenerDetails}
+     * @return a new {@link JetStreamListenerEndpoint}
      * @throws IllegalArgumentException if configuration constraints are violated
      * @since 0.1.0
      */
-    public JetStreamListenerDetails build() {
+    public JetStreamListenerEndpoint build() {
       if (bean == null) {
         throw new IllegalArgumentException("bean is required");
       }
@@ -421,7 +421,7 @@ public final class JetStreamListenerDetails {
             "deadLetterSubject is not supported with MANUAL ack mode");
       }
       validateJetStreamListenerMethod(method);
-      return new JetStreamListenerDetails(
+      return new JetStreamListenerEndpoint(
           bean,
           method,
           subject,
