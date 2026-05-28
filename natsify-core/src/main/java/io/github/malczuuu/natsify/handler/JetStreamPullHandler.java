@@ -26,6 +26,9 @@ import io.nats.client.api.ConsumerConfiguration;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -46,7 +49,7 @@ final class JetStreamPullHandler implements JetStreamHandler {
 
   private volatile boolean running = false;
   private volatile @Nullable JetStreamSubscription subscription = null;
-  private volatile @Nullable Thread listenerThread = null;
+  private volatile @Nullable ExecutorService executor = null;
 
   JetStreamPullHandler(
       JetStream stream,
@@ -78,11 +81,17 @@ final class JetStreamPullHandler implements JetStreamHandler {
     }
     subscription = stream.subscribe(endpoint.getSubject(), builder.build());
 
-    Thread listenerThread = new Thread(this::runPollPool, "nats-pull-" + endpoint.getSubject());
-    this.listenerThread = listenerThread;
-    listenerThread.setDaemon(true);
+    String threadName = "nats-pull-" + endpoint.getSubject();
+    ExecutorService executor =
+        Executors.newSingleThreadExecutor(
+            r -> {
+              Thread t = new Thread(r, threadName);
+              t.setDaemon(true);
+              return t;
+            });
+    this.executor = executor;
     running = true;
-    listenerThread.start();
+    executor.submit(this::runPollPool);
 
     log.info("Subscribed pull JetStream listener to subject={}", endpoint.getSubject());
   }
@@ -96,9 +105,19 @@ final class JetStreamPullHandler implements JetStreamHandler {
     }
     running = false;
 
-    Thread listenerThread = this.listenerThread;
-    if (listenerThread != null) {
-      listenerThread.interrupt();
+    ExecutorService executor = this.executor;
+    if (executor != null) {
+      executor.shutdownNow();
+      try {
+        int i = 0;
+        while (!executor.awaitTermination(5, TimeUnit.SECONDS) && i++ < 3) {
+          log.warn(
+              "Pull JetStream listener thread did not terminate after 5 seconds, waiting again (count={} attempts so far)",
+              i);
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
 
     JetStreamSubscription subscription = this.subscription;
