@@ -104,6 +104,24 @@ spotless {
     }
 }
 
+tasks.named<JacocoReport>("testCodeCoverageReport") {
+    classDirectories.setFrom(
+        files(
+            classDirectories.files.map {
+                fileTree(it) {
+                    exclude(
+                        "io/github/malczuuu/natsify/autoconfigure/NatsProperties.class",
+                        "io/github/malczuuu/natsify/instrument/JetStreamListenerObserver.class",
+                        "io/github/malczuuu/natsify/instrument/NatsConnectionObserver.class",
+                        "io/github/malczuuu/natsify/instrument/NatsListenerObserver.class",
+                        "**/*Exception.class",
+                    )
+                }
+            },
+        ),
+    )
+}
+
 tasks.named<Task>("check") {
     dependsOn(tasks.named<JacocoReport>("testCodeCoverageReport"))
 }

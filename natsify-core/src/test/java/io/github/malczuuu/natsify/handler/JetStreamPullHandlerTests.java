@@ -33,6 +33,7 @@ import org.mockito.Mockito;
 
 class JetStreamPullHandlerTests {
 
+  private static final Object BEAN = new Object();
   private static final Method METHOD;
 
   static {
@@ -51,7 +52,7 @@ class JetStreamPullHandlerTests {
 
     JetStreamListenerEndpoint endpoint =
         JetStreamListenerEndpoint.builder()
-            .withBean(new Object())
+            .withBean(BEAN)
             .withMethod(METHOD)
             .withSubject("test.subject")
             .withStream("TEST")

@@ -127,14 +127,14 @@ class JetStreamListenerTests extends AbstractIntegrationTests {
       throws Exception {
     Headers headers = new Headers();
     headers.add("X-Type", "by-type-value");
-    Message msg =
+    Message message =
         NatsMessage.builder()
             .subject("js.headers-by-type")
             .headers(headers)
             .data(new byte[0])
             .build();
 
-    natsOperations.publish(msg);
+    natsOperations.publish(message);
 
     Headers received = handler.headersValuesByType.poll(5, TimeUnit.SECONDS);
     assertThat(received).isNotNull();

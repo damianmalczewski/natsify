@@ -7,11 +7,11 @@ plugins {
 }
 
 dependencies {
+    api(libs.jackson.databind)
     api(libs.jnats)
     api(libs.jspecify)
     api(libs.spring.context)
 
-    compileOnly(libs.jackson.databind)
     compileOnly(libs.micrometer.core)
     compileOnly(libs.slf4j.api)
 

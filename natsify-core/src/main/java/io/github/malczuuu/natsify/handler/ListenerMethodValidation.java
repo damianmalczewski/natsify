@@ -18,6 +18,7 @@ package io.github.malczuuu.natsify.handler;
 
 import io.github.malczuuu.natsify.annotation.NatsHeader;
 import io.github.malczuuu.natsify.annotation.NatsHeaders;
+import io.github.malczuuu.natsify.annotation.NatsReplyTo;
 import io.github.malczuuu.natsify.annotation.NatsSubject;
 import io.nats.client.impl.Headers;
 import io.nats.client.impl.NatsJetStreamMetaData;
@@ -48,6 +49,14 @@ final class ListenerMethodValidation {
       Method method, Parameter param, int index, boolean jetStream) {
     if (!jetStream && NatsJetStreamMetaData.class.isAssignableFrom(param.getType())) {
       throw new IllegalArgumentException(jetStreamMetaDataNotAllowed(method, index));
+    }
+    if (param.isAnnotationPresent(NatsReplyTo.class)) {
+      if (jetStream) {
+        throw new IllegalArgumentException(natsReplyToNotAllowedOnJetStream(method, index));
+      }
+      if (param.getType() != String.class) {
+        throw new IllegalArgumentException(natsReplyToMustBeString(method, index));
+      }
     }
     NatsHeader natsHeader = param.getAnnotation(NatsHeader.class);
     if (natsHeader != null) {
@@ -126,6 +135,22 @@ final class ListenerMethodValidation {
         + " of "
         + method.toGenericString()
         + ": @NatsHeaders parameter must be assignable from Headers";
+  }
+
+  private static String natsReplyToNotAllowedOnJetStream(Method method, int index) {
+    return "Parameter "
+        + index
+        + " of "
+        + method.toGenericString()
+        + ": @NatsReplyTo is not supported on @JetStreamListener methods";
+  }
+
+  private static String natsReplyToMustBeString(Method method, int index) {
+    return "Parameter "
+        + index
+        + " of "
+        + method.toGenericString()
+        + ": @NatsReplyTo parameter must be String";
   }
 
   private ListenerMethodValidation() {}

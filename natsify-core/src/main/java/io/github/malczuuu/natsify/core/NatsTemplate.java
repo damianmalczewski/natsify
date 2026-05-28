@@ -21,8 +21,11 @@ import io.nats.client.Message;
 import io.nats.client.impl.Headers;
 import io.nats.client.impl.NatsMessage;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -50,6 +53,7 @@ public class NatsTemplate implements NatsOperations {
   /**
    * Returns a builder for {@link NatsTemplate}.
    *
+   * @return a new {@link NatsTemplate.Builder}
    * @since 0.1.0
    */
   public static Builder builder() {
@@ -164,6 +168,76 @@ public class NatsTemplate implements NatsOperations {
 
   private void doPublish(Message message) {
     publishInterceptorChain.execute(message, m -> connectionManager.getConnection().publish(m));
+  }
+
+  /**
+   * Sends a request to the given subject and returns a future that completes with the reply.
+   * Completes exceptionally with {@link java.util.concurrent.TimeoutException} if no reply arrives
+   * within the given timeout, or with {@link IllegalStateException} if the request was suppressed
+   * by a {@link NatsPublishInterceptor}.
+   *
+   * @param subject the NATS subject
+   * @param payload the request body
+   * @param timeout how long to wait for a reply
+   * @return future that completes with the reply message
+   * @since 0.1.0
+   */
+  @Override
+  public CompletableFuture<NatsReply> request(String subject, byte[] payload, Duration timeout) {
+    return doRequest(NatsMessage.builder().subject(subject).data(payload).build(), timeout);
+  }
+
+  /**
+   * Sends a request to the given subject and returns a future that completes with the reply.
+   * Completes exceptionally with {@link java.util.concurrent.TimeoutException} if no reply arrives
+   * within the given timeout, or with {@link IllegalStateException} if the request was suppressed
+   * by a {@link NatsPublishInterceptor}.
+   *
+   * @param subject the NATS subject
+   * @param payload the request body, encoded as UTF-8
+   * @param timeout how long to wait for a reply
+   * @return future that completes with the reply message
+   * @since 0.1.0
+   */
+  @Override
+  public CompletableFuture<NatsReply> request(String subject, String payload, Duration timeout) {
+    return doRequest(
+        NatsMessage.builder()
+            .subject(subject)
+            .data(payload.getBytes(StandardCharsets.UTF_8))
+            .build(),
+        timeout);
+  }
+
+  /**
+   * Sends a request to the given subject and returns a future that completes with the reply.
+   * Completes exceptionally with {@link java.util.concurrent.TimeoutException} if no reply arrives
+   * within the given timeout, or with {@link IllegalStateException} if the request was suppressed
+   * by a {@link NatsPublishInterceptor}.
+   *
+   * @param subject the NATS subject
+   * @param payload the request body, serialized to JSON
+   * @param timeout how long to wait for a reply
+   * @param <T> the payload object type
+   * @return future that completes with the reply message
+   * @since 0.1.0
+   */
+  @Override
+  public <T> CompletableFuture<NatsReply> request(String subject, T payload, Duration timeout) {
+    return doRequest(
+        NatsMessage.builder().subject(subject).data(jsonMapper.writeValueAsBytes(payload)).build(),
+        timeout);
+  }
+
+  private CompletableFuture<NatsReply> doRequest(Message message, Duration timeout) {
+    AtomicReference<@Nullable CompletableFuture<Message>> ref = new AtomicReference<>();
+    publishInterceptorChain.execute(
+        message, m -> ref.set(connectionManager.getConnection().requestWithTimeout(m, timeout)));
+    CompletableFuture<Message> result = ref.get();
+    return result != null
+        ? result.thenApply(m -> new SimpleNatsReply(m, jsonMapper))
+        : CompletableFuture.failedFuture(
+            new IllegalStateException("request suppressed by interceptor"));
   }
 
   /**

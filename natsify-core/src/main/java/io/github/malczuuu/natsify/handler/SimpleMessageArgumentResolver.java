@@ -19,10 +19,12 @@ package io.github.malczuuu.natsify.handler;
 import io.github.malczuuu.natsify.annotation.NatsHeader;
 import io.github.malczuuu.natsify.annotation.NatsHeaders;
 import io.github.malczuuu.natsify.annotation.NatsPayload;
+import io.github.malczuuu.natsify.annotation.NatsReplyTo;
 import io.github.malczuuu.natsify.annotation.NatsSubject;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
 import io.nats.client.impl.NatsJetStreamMetaData;
+import io.nats.client.impl.NatsMessage;
 import java.lang.reflect.Parameter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -88,18 +90,21 @@ public final class SimpleMessageArgumentResolver implements MessageArgumentResol
     NatsHeader natsHeader = parameter.getAnnotation(NatsHeader.class);
     if (natsHeader != null) {
       String name = natsHeader.value().isEmpty() ? natsHeader.name() : natsHeader.value();
-      Headers msgHeaders = message.getHeaders();
-      if (msgHeaders == null) {
+      Headers messageHeaders = message.getHeaders();
+      if (messageHeaders == null) {
         return null;
       }
       if (List.class.isAssignableFrom(parameter.getType())) {
-        return msgHeaders.get(name);
+        return messageHeaders.get(name);
       }
       if (parameter.getType() == String[].class) {
-        List<String> values = msgHeaders.get(name);
+        List<String> values = messageHeaders.get(name);
         return values != null ? values.toArray(new String[0]) : null;
       }
-      return msgHeaders.getFirst(name);
+      return messageHeaders.getFirst(name);
+    }
+    if (parameter.isAnnotationPresent(NatsReplyTo.class)) {
+      return message.getReplyTo();
     }
     if (parameter.isAnnotationPresent(NatsSubject.class)) {
       return message.getSubject();
@@ -123,5 +128,33 @@ public final class SimpleMessageArgumentResolver implements MessageArgumentResol
     return data != null
         ? jsonMapper.readValue(data, jsonMapper.constructType(parameter.getParameterizedType()))
         : null;
+  }
+
+  /**
+   * Converts a listener method return value into a reply {@link Message}.
+   *
+   * @param result the non-null return value from the listener method
+   * @param replyTo the NATS subject to address the reply to
+   * @return the reply message ready to publish
+   * @since 0.1.0
+   */
+  @Override
+  public Message buildReplyMessage(Object result, String replyTo) {
+    if (result instanceof Message replyToMessage) {
+      return NatsMessage.builder()
+          .subject(replyTo)
+          .headers(replyToMessage.getHeaders())
+          .data(replyToMessage.getData())
+          .build();
+    }
+    byte[] data;
+    if (result instanceof byte[] bytes) {
+      data = bytes;
+    } else if (result instanceof String str) {
+      data = str.getBytes(StandardCharsets.UTF_8);
+    } else {
+      data = jsonMapper.writeValueAsBytes(result);
+    }
+    return NatsMessage.builder().subject(replyTo).data(data).build();
   }
 }

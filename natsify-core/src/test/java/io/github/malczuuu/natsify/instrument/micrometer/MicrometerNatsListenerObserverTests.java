@@ -91,4 +91,27 @@ class MicrometerNatsListenerObserverTests {
     assertThat(counter).isNotNull();
     assertThat(Objects.requireNonNull(counter).count()).isEqualTo(1.0);
   }
+
+  @Test
+  void givenReplyDiscarded_whenNoReplyToAddress_thenDiscardedCounterIncremented() {
+    observer.onReplyDiscarded("rpc.orders", "");
+
+    Counter counter =
+        registry
+            .find("nats.listener.messages.reply.discarded")
+            .tag("subject", "rpc.orders")
+            .counter();
+    assertThat(counter).isNotNull();
+    assertThat(Objects.requireNonNull(counter).count()).isEqualTo(1.0);
+  }
+
+  @Test
+  void givenReplyFailed_whenPublishThrows_thenReplyErrorCounterIncremented() {
+    observer.onReplyFailed("rpc.orders", "");
+
+    Counter counter =
+        registry.find("nats.listener.messages.reply.error").tag("subject", "rpc.orders").counter();
+    assertThat(counter).isNotNull();
+    assertThat(Objects.requireNonNull(counter).count()).isEqualTo(1.0);
+  }
 }

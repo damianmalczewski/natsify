@@ -89,9 +89,9 @@ class NatsPublishInterceptorChainExecutionTests {
     NatsPublishInterceptor high =
         new NatsPublishInterceptor() {
           @Override
-          public void intercept(Message msg, NatsPublishInterceptorChain chain) {
+          public void intercept(Message message, NatsPublishInterceptorChain chain) {
             calls.add("high");
-            chain.proceed(msg);
+            chain.proceed(message);
           }
 
           @Override

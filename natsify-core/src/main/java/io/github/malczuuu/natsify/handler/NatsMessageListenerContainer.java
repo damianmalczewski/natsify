@@ -22,6 +22,8 @@ import io.nats.client.Connection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages NATS Core subscription handlers for registered {@link NatsListenerEndpoint endpoints}.
@@ -29,6 +31,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @since 0.1.0
  */
 public class NatsMessageListenerContainer implements MessageListenerContainer {
+
+  private static final Logger log = LoggerFactory.getLogger(NatsMessageListenerContainer.class);
 
   private final NatsListenerEndpointRegistry registry;
   private final MessageArgumentResolver argumentResolver;
@@ -75,6 +79,7 @@ public class NatsMessageListenerContainer implements MessageListenerContainer {
               new NatsListenerInvocation(
                   connection, argumentResolver, observer, endpoint, interceptors));
       handlers.add(handler);
+      log.debug("Starting handler={}", handler);
       handler.start();
     }
   }
@@ -88,6 +93,7 @@ public class NatsMessageListenerContainer implements MessageListenerContainer {
   public synchronized void stop() {
     List<RuntimeException> failures = new ArrayList<>();
     for (NatsListenerHandler handler : handlers) {
+      log.info("Stopping handler={}", handler);
       try {
         handler.stop();
       } catch (RuntimeException e) {

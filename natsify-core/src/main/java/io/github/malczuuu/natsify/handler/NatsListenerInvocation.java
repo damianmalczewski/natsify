@@ -27,6 +27,7 @@ import io.nats.client.impl.Headers;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.function.Consumer;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
@@ -55,35 +56,36 @@ final class NatsListenerInvocation implements Consumer<Message> {
   }
 
   @Override
-  public void accept(Message msg) {
+  public void accept(Message message) {
     observer.onReceived(endpoint.getSubject(), endpoint.getQueue());
     long start = System.nanoTime();
     try {
-      interceptorChain.execute(msg, this::doAccept);
+      interceptorChain.execute(message, this::doAccept);
     } finally {
       observer.onProcessed(endpoint.getSubject(), endpoint.getQueue(), System.nanoTime() - start);
     }
   }
 
-  private void doAccept(Message msg) {
+  private void doAccept(Message message) {
     Object[] args;
     try {
-      args = argumentResolver.resolveArguments(endpoint.getMethod().getParameters(), msg);
+      args = argumentResolver.resolveArguments(endpoint.getMethod().getParameters(), message);
     } catch (Exception e) {
       log.error(
           "Unable to resolve arguments for NATS listener={}.{}, dropping message, subject={}",
           AopUtils.getTargetClass(endpoint.getBean()).getSimpleName(),
           endpoint.getMethod().getName(),
-          msg.getSubject(),
+          message.getSubject(),
           e);
       observer.onFailed(endpoint.getSubject(), endpoint.getQueue());
-      publishDeadLetter(msg, e);
+      publishDeadLetter(message, e);
       return;
     }
 
     try {
-      endpoint.getMethod().invoke(endpoint.getBean(), args);
+      Object result = endpoint.getMethod().invoke(endpoint.getBean(), args);
       observer.onSucceeded(endpoint.getSubject(), endpoint.getQueue());
+      publishReply(message, result);
     } catch (InvocationTargetException | IllegalAccessException e) {
       Throwable cause = e instanceof InvocationTargetException ite ? ite.getCause() : e;
       log.error(
@@ -92,17 +94,43 @@ final class NatsListenerInvocation implements Consumer<Message> {
           endpoint.getMethod().getName(),
           cause);
       observer.onFailed(endpoint.getSubject(), endpoint.getQueue());
-      publishDeadLetter(msg, cause instanceof Exception ex ? ex : e);
+      publishDeadLetter(message, cause instanceof Exception ex ? ex : e);
     }
   }
 
-  private void publishDeadLetter(Message msg, Exception cause) {
+  private void publishReply(Message message, @Nullable Object result) {
+    if (result == null) {
+      return;
+    }
+    String replyTo = message.getReplyTo();
+    if (replyTo == null || replyTo.isEmpty()) {
+      log.warn(
+          "NATS listener={}.{} returned a value but the message has no reply-to address, discarding reply",
+          AopUtils.getTargetClass(endpoint.getBean()).getSimpleName(),
+          endpoint.getMethod().getName());
+      observer.onReplyDiscarded(endpoint.getSubject(), endpoint.getQueue());
+      return;
+    }
+    try {
+      connection.publish(argumentResolver.buildReplyMessage(result, replyTo));
+    } catch (Exception e) {
+      log.error(
+          "Failed to publish reply to subject={} for NATS listener={}.{}",
+          replyTo,
+          AopUtils.getTargetClass(endpoint.getBean()).getSimpleName(),
+          endpoint.getMethod().getName(),
+          e);
+      observer.onReplyFailed(endpoint.getSubject(), endpoint.getQueue());
+    }
+  }
+
+  private void publishDeadLetter(Message message, Exception cause) {
     if (endpoint.getDeadLetterSubject().isEmpty()) {
       return;
     }
     try {
-      Headers headers = buildDeadLetterHeaders(msg, msg.getSubject(), cause);
-      buildAndPublishDeadLetter(connection, endpoint.getDeadLetterSubject(), msg, headers);
+      Headers headers = buildDeadLetterHeaders(message, message.getSubject(), cause);
+      buildAndPublishDeadLetter(connection, endpoint.getDeadLetterSubject(), message, headers);
       observer.onDeadLettered(endpoint.getSubject(), endpoint.getQueue());
     } catch (Exception e) {
       log.error(

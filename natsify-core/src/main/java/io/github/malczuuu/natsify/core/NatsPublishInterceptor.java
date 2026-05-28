@@ -32,9 +32,9 @@ import org.springframework.core.Ordered;
 public interface NatsPublishInterceptor extends Ordered {
 
   /**
-   * Intercepts the given outbound message. Call {@link
-   * NatsPublishInterceptorChain#proceed(Message)} to forward it to the next interceptor or the NATS
-   * connection. Not calling {@code proceed} suppresses the publish.
+   * Intercepts the given outbound message. Use {@link NatsPublishInterceptorChain#proceed(Message)}
+   * to forward it to the next interceptor or the NATS connection. Not calling {@code proceed}
+   * suppresses the publishing.
    *
    * @param message the outbound message, fully built with subject, headers, and serialized body
    * @param chain the chain to continue publishing

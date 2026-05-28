@@ -29,8 +29,6 @@ import io.nats.client.Message;
 import io.nats.client.Nats;
 import io.nats.client.Options;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -48,10 +46,10 @@ import org.springframework.aop.support.AopUtils;
  *
  * @since 0.1.0
  */
-public final class DefaultConnectionManager
+public final class ConnectionConfigurer
     implements ConnectionManager, ConnectionListener, ErrorListener {
 
-  private static final Logger log = LoggerFactory.getLogger(DefaultConnectionManager.class);
+  private static final Logger log = LoggerFactory.getLogger(ConnectionConfigurer.class);
 
   private final Options options;
   private final List<MessageListenerContainer> containers;
@@ -61,14 +59,14 @@ public final class DefaultConnectionManager
   private volatile @Nullable Connection connection = null;
 
   /**
-   * Creates a new {@link DefaultConnectionManager}.
+   * Creates a new {@link ConnectionConfigurer}.
    *
    * @param options NATS connection options
    * @param containers listener containers responsible for setting up annotation-based listeners
    * @param connectionObserver observer for connection lifecycle events
    * @since 0.1.0
    */
-  public DefaultConnectionManager(
+  public ConnectionConfigurer(
       Options options,
       List<MessageListenerContainer> containers,
       NatsConnectionObserver connectionObserver) {
@@ -88,12 +86,7 @@ public final class DefaultConnectionManager
     if (connection == null) {
       synchronized (this) {
         if (connection == null) {
-          try {
-            log.info("Establishing NATS connection at servers={}", options.getServers());
-            this.connection = Nats.connect(options);
-          } catch (Exception e) {
-            throw new ConnectionException("Failed to establish NATS connection", e);
-          }
+          connection = doConnect();
         }
       }
     }
@@ -107,7 +100,9 @@ public final class DefaultConnectionManager
    */
   @Override
   public synchronized void start() {
-    Connection connection = getConnection();
+    Connection connection = doConnect();
+    this.connection = connection;
+
     int started = 0;
     try {
       for (MessageListenerContainer container : containers) {
@@ -141,8 +136,6 @@ public final class DefaultConnectionManager
   @Override
   public synchronized void stop() {
     running = false;
-    List<MessageListenerContainer> containers = new ArrayList<>(this.containers);
-    Collections.reverse(containers);
     for (MessageListenerContainer container : containers) {
       log.info(
           "Shutting down annotation-based NATS listeners for type={}",
@@ -157,9 +150,6 @@ public final class DefaultConnectionManager
         connection.close();
       }
     } catch (Exception e) {
-      if (e instanceof NatsIntegrationException ex) {
-        throw ex;
-      }
       throw new ListenerConfigureException("Failed to close NATS connection", e);
     } finally {
       this.connection = null;
@@ -257,16 +247,25 @@ public final class DefaultConnectionManager
    * Handles a discarded message event and forwards it to the error observer.
    *
    * @param conn the connection that discarded the message
-   * @param msg the discarded message
+   * @param message the discarded message
    * @since 0.1.0
    */
   @Override
-  public void messageDiscarded(Connection conn, Message msg) {
+  public void messageDiscarded(Connection conn, Message message) {
     log.warn(
         "Message discarded on NATS subject; subject={}, metadata={}",
-        msg.getSubject(),
-        msg.metaData());
+        message.getSubject(),
+        message.metaData());
     connectionObserver.onMessageDiscarded();
+  }
+
+  private Connection doConnect() {
+    try {
+      log.info("Establishing NATS connection at servers={}", options.getServers());
+      return Nats.connect(options);
+    } catch (Exception e) {
+      throw new ConnectionException("Failed to establish NATS connection", e);
+    }
   }
 
   private boolean shouldSkipLoggingException(Connection conn, Exception exp) {

@@ -57,8 +57,8 @@ public class JetStreamListenerComponent {
   }
 
   @JetStreamListener(subject = "js.message", stream = "TEST", durable = "message-consumer")
-  public void handleMessage(Message msg) {
-    messages.add(msg);
+  public void handleMessage(Message message) {
+    messages.add(message);
   }
 
   @JetStreamListener(
@@ -138,8 +138,8 @@ public class JetStreamListenerComponent {
       stream = "TEST",
       durable = "dead-letter-consumer",
       consumerType = ConsumerType.PUSH)
-  public void handleDeadLetter(Message msg) {
-    deadLetterMessages.add(msg);
+  public void handleDeadLetter(Message message) {
+    deadLetterMessages.add(message);
   }
 
   public void clearAll() {

@@ -35,9 +35,9 @@ final class DeadLetterSupport {
    * X-Dead-Letter-Timestamp}. Callers may add further headers before publishing.
    */
   static Headers buildDeadLetterHeaders(
-      Message msg, String sourceSubject, @Nullable Exception cause) {
+      Message message, String sourceSubject, @Nullable Exception cause) {
     Headers headers = new Headers();
-    Headers origHeaders = msg.getHeaders();
+    Headers origHeaders = message.getHeaders();
     if (origHeaders != null) {
       for (String key : origHeaders.keySet()) {
         List<String> values = origHeaders.get(key);
@@ -51,11 +51,11 @@ final class DeadLetterSupport {
       Throwable root = cause instanceof InvocationTargetException ite ? ite.getCause() : cause;
 
       String exceptionName = root != null ? root.getClass().getName() : cause.getClass().getName();
-      String message = root != null ? root.getMessage() : null;
+      String exceptionMessage = root != null ? root.getMessage() : null;
 
       String reason =
           (root != null ? root.getClass().getSimpleName() : cause.getClass().getSimpleName())
-              + (message != null ? ": " + truncate(message) : "");
+              + (exceptionMessage != null ? ": " + truncate(exceptionMessage) : "");
 
       headers.add("X-Dead-Letter-Reason", reason);
       headers.add("X-Dead-Letter-Exception", exceptionName);
@@ -69,17 +69,18 @@ final class DeadLetterSupport {
    * propagate or swallow.
    */
   static void buildAndPublishDeadLetter(
-      Connection connection, String deadLetterSubject, Message msg, Headers headers) {
-    byte[] body = msg.getData() != null ? msg.getData() : new byte[0];
-    Message message =
+      Connection connection, String deadLetterSubject, Message message, Headers headers) {
+    byte[] body = message.getData() != null ? message.getData() : new byte[0];
+    Message deadLetterMessage =
         NatsMessage.builder().subject(deadLetterSubject).headers(headers).data(body).build();
-    connection.publish(message);
+    connection.publish(deadLetterMessage);
   }
 
   private static String truncate(String value) {
-    return value.length() <= DETAIL_MAX_LENGTH
-        ? value
-        : value.substring(0, DETAIL_MAX_LENGTH) + "...";
+    String sanitized = value.replace('\n', ' ').replace('\r', ' ');
+    return sanitized.length() <= DETAIL_MAX_LENGTH
+        ? sanitized
+        : sanitized.substring(0, DETAIL_MAX_LENGTH) + "...";
   }
 
   private DeadLetterSupport() {}

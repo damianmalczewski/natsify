@@ -27,9 +27,13 @@ Requires Spring Boot 4.x.
         - [`@NatsHeader`](#natsheader)
         - [`@NatsSubject`](#natssubject)
         - [`@NatsHeaders`](#natsheaders)
+        - [`@NatsReplyTo`](#natsreplyto)
     - [JSON deserialization](#json-deserialization)
     - [No-arg methods](#no-arg-methods)
     - [Mixed parameters](#mixed-parameters)
+- [Request-reply (RPC)](#request-reply-rpc)
+    - [Listener return values](#listener-return-values)
+    - [Sending requests](#sending-requests)
 - [JetStream stream auto-creation](#jetstream-stream-auto-creation)
 - [Publishing messages](#publishing-messages)
 - [Observability](#observability)
@@ -277,6 +281,20 @@ Injects all message headers. Equivalent to declaring `io.nats.client.impl.Header
 public void handle(Event event, @NatsHeaders Headers headers) {}
 ```
 
+#### `@NatsReplyTo`
+
+Injects the reply-to inbox from the incoming message as a `String`. The value is `null` when the message has no reply-to
+address (i.e., was published without a reply inbox). Only supported on `@NatsListener` methods.
+
+```java
+@NatsListener(subject = "events")
+public void handle(Event event, @NatsReplyTo String replyTo) {
+    if (replyTo != null) {
+        natsOperations.publish(replyTo, new EventAck(event.id()));
+    }
+}
+```
+
 ### JSON deserialization
 
 Any parameter not matched by the rules above is deserialized from the message body using Jackson. Full generic type
@@ -308,6 +326,62 @@ A method may declare any combination of the above in any order.
 public void onOrder(
     Order order, @NatsHeader("X-Source") String source, Headers allHeaders, Message rawMessage) {}
 
+```
+
+## Request-reply (RPC)
+
+NATS supports a built-in request-reply (RPC) pattern. The requester sends a message with a reply-to inbox address; the
+responder publishes the reply to that address.
+
+### Listener return values
+
+A `@NatsListener` method can participate as a responder by returning a non-void value. When the incoming message
+carries a reply-to address, the return value is automatically serialized and published to that address.
+
+| Return type                   | Reply body                              |
+|-------------------------------|-----------------------------------------|
+| `byte[]`                      | Sent as-is                              |
+| `String`                      | UTF-8 encoded bytes                     |
+| `io.nats.client.Message`      | Body and headers from the returned message |
+| Any other type                | JSON-serialized via Jackson             |
+
+```java
+@NatsListener(subject = "calc.add")
+public MathResult handleAdd(MathRequest request) {
+    return new MathResult(request.a() + request.b());
+}
+
+@NatsListener(subject = "ping")
+public String handlePing() {
+    return "pong";
+}
+```
+
+If the incoming message has no reply-to address and the method returns a non-null value, the reply is discarded and a
+`WARN` is logged. This allows a subject to be used for both fire-and-forget and RPC without reconfiguring the listener.
+
+Return values are not supported on `@JetStreamListener` methods. JetStream uses the reply-to field internally for
+acknowledgment.
+
+### Sending requests
+
+`NatsOperations` provides `request()` methods that send a message and return a `CompletableFuture<Message>` that
+completes when a reply arrives. The future completes exceptionally with `TimeoutException` if no reply arrives within
+the given timeout.
+
+```java
+@Autowired NatsOperations natsOperations;
+
+// bytes
+CompletableFuture<Message> future = natsOperations.request("ping", new byte[0], Duration.ofSeconds(5));
+
+// string
+CompletableFuture<Message> future = natsOperations.request("ping", "data", Duration.ofSeconds(5));
+
+// JSON-serialized object
+CompletableFuture<Message> future = natsOperations.request("calc.add", new MathRequest(3, 4), Duration.ofSeconds(5));
+Message reply = future.get();
+MathResult result = objectMapper.readValue(reply.getData(), MathResult.class);
 ```
 
 ## JetStream stream auto-creation

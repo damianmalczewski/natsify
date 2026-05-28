@@ -29,8 +29,11 @@ import io.nats.client.Message;
 import io.nats.client.impl.Headers;
 import io.nats.client.impl.NatsMessage;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -66,27 +69,6 @@ class NatsTemplateTests {
 
     template.publish("test.subject", new byte[0]);
 
-    verify(connection).publish(any(Message.class));
-  }
-
-  @Test
-  void givenSingleInterceptorViaAddInterceptor_whenPublish_thenInterceptorCalled() {
-    List<String> calls = new ArrayList<>();
-    NatsPublishInterceptor interceptor =
-        (msg, chain) -> {
-          calls.add("interceptor");
-          chain.proceed(msg);
-        };
-    NatsTemplate template =
-        NatsTemplate.builder()
-            .withConnectionSupplier(connectionSupplier)
-            .withJsonMapper(jsonMapper)
-            .addInterceptor(interceptor)
-            .build();
-
-    template.publish("test.subject", new byte[0]);
-
-    assertThat(calls).containsExactly("interceptor");
     verify(connection).publish(any(Message.class));
   }
 
@@ -220,7 +202,7 @@ class NatsTemplateTests {
         NatsTemplate.builder()
             .withConnectionSupplier(connectionSupplier)
             .withJsonMapper(jsonMapper)
-            .addInterceptors(List.of(interceptor))
+            .addInterceptor(interceptor)
             .build();
 
     template.publish("test.subject", new byte[0]);
@@ -236,9 +218,9 @@ class NatsTemplateTests {
     NatsPublishInterceptor first =
         new NatsPublishInterceptor() {
           @Override
-          public void intercept(Message msg, NatsPublishInterceptorChain chain) {
+          public void intercept(Message message, NatsPublishInterceptorChain chain) {
             calls.add("first");
-            chain.proceed(msg);
+            chain.proceed(message);
           }
 
           @Override
@@ -247,17 +229,9 @@ class NatsTemplateTests {
           }
         };
     NatsPublishInterceptor second =
-        new NatsPublishInterceptor() {
-          @Override
-          public void intercept(Message msg, NatsPublishInterceptorChain chain) {
-            calls.add("second");
-            chain.proceed(msg);
-          }
-
-          @Override
-          public int getOrder() {
-            return Ordered.LOWEST_PRECEDENCE;
-          }
+        (message, chain) -> {
+          calls.add("second");
+          chain.proceed(message);
         };
     NatsTemplate template =
         NatsTemplate.builder()
@@ -279,7 +253,7 @@ class NatsTemplateTests {
         NatsTemplate.builder()
             .withConnectionSupplier(connectionSupplier)
             .withJsonMapper(jsonMapper)
-            .addInterceptors(List.of(interceptor))
+            .addInterceptor(interceptor)
             .build();
 
     template.publish("original.subject", new byte[0]);
@@ -290,13 +264,106 @@ class NatsTemplateTests {
   }
 
   @Test
+  void givenNoInterceptors_whenRequestBytes_thenConnectionReceivesCorrectSubjectAndPayload() {
+    byte[] payload = {1, 2, 3};
+    when(connection.requestWithTimeout(any(Message.class), any(Duration.class)))
+        .thenReturn(new CompletableFuture<>());
+    NatsTemplate template =
+        NatsTemplate.builder()
+            .withConnectionSupplier(connectionSupplier)
+            .withJsonMapper(jsonMapper)
+            .build();
+
+    template.request("test.subject", payload, Duration.ofSeconds(1));
+
+    ArgumentCaptor<Message> captor = ArgumentCaptor.forClass(Message.class);
+    verify(connection).requestWithTimeout(captor.capture(), any(Duration.class));
+    assertThat(captor.getValue().getSubject()).isEqualTo("test.subject");
+    assertThat(captor.getValue().getData()).isEqualTo(payload);
+  }
+
+  @Test
+  void givenNoInterceptors_whenRequestString_thenConnectionReceivesUtf8Payload() {
+    when(connection.requestWithTimeout(any(Message.class), any(Duration.class)))
+        .thenReturn(new CompletableFuture<>());
+    NatsTemplate template =
+        NatsTemplate.builder()
+            .withConnectionSupplier(connectionSupplier)
+            .withJsonMapper(jsonMapper)
+            .build();
+
+    template.request("test.subject", "hello", Duration.ofSeconds(1));
+
+    ArgumentCaptor<Message> captor = ArgumentCaptor.forClass(Message.class);
+    verify(connection).requestWithTimeout(captor.capture(), any(Duration.class));
+    assertThat(captor.getValue().getData()).isEqualTo("hello".getBytes(StandardCharsets.UTF_8));
+  }
+
+  @Test
+  void givenNoInterceptors_whenRequestObject_thenConnectionReceivesJsonPayload() {
+    byte[] json = "{\"k\":\"v\"}".getBytes(StandardCharsets.UTF_8);
+    when(jsonMapper.writeValueAsBytes(any())).thenReturn(json);
+    when(connection.requestWithTimeout(any(Message.class), any(Duration.class)))
+        .thenReturn(new CompletableFuture<>());
+    NatsTemplate template =
+        NatsTemplate.builder()
+            .withConnectionSupplier(connectionSupplier)
+            .withJsonMapper(jsonMapper)
+            .build();
+
+    template.request("test.subject", new Object(), Duration.ofSeconds(1));
+
+    ArgumentCaptor<Message> captor = ArgumentCaptor.forClass(Message.class);
+    verify(connection).requestWithTimeout(captor.capture(), any(Duration.class));
+    assertThat(captor.getValue().getData()).isEqualTo(json);
+  }
+
+  @Test
+  void givenNoInterceptors_whenRequestReturnsReply_thenFutureCompletesWithReply() {
+    Message reply = Mockito.mock(Message.class);
+    when(connection.requestWithTimeout(any(Message.class), any(Duration.class)))
+        .thenReturn(CompletableFuture.completedFuture(reply));
+    NatsTemplate template =
+        NatsTemplate.builder()
+            .withConnectionSupplier(connectionSupplier)
+            .withJsonMapper(jsonMapper)
+            .build();
+
+    CompletableFuture<NatsReply> future =
+        template.request("test.subject", new byte[0], Duration.ofSeconds(1));
+
+    assertThat(future.join().getMessage()).isSameAs(reply);
+  }
+
+  @Test
+  void givenAbortingInterceptor_whenRequest_thenFutureFailsWithIllegalStateException() {
+    NatsPublishInterceptor interceptor = (msg, chain) -> {};
+    NatsTemplate template =
+        NatsTemplate.builder()
+            .withConnectionSupplier(connectionSupplier)
+            .withJsonMapper(jsonMapper)
+            .addInterceptor(interceptor)
+            .build();
+
+    CompletableFuture<NatsReply> future =
+        template.request("test.subject", new byte[0], Duration.ofSeconds(1));
+
+    assertThatThrownBy(future::join)
+        .isInstanceOf(CompletionException.class)
+        .cause()
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("suppressed by interceptor");
+    verify(connection, never()).requestWithTimeout(any(Message.class), any(Duration.class));
+  }
+
+  @Test
   void givenInterceptorThatAborts_whenPublish_thenConnectionNeverCalled() {
     NatsPublishInterceptor interceptor = (msg, chain) -> {};
     NatsTemplate template =
         NatsTemplate.builder()
             .withConnectionSupplier(connectionSupplier)
             .withJsonMapper(jsonMapper)
-            .addInterceptors(List.of(interceptor))
+            .addInterceptor(interceptor)
             .build();
 
     template.publish("test.subject", new byte[0]);

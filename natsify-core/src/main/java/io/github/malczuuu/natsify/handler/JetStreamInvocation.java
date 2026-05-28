@@ -59,29 +59,30 @@ final class JetStreamInvocation implements Consumer<Message> {
   }
 
   @Override
-  public void accept(Message msg) {
+  public void accept(Message message) {
     observer.onReceived(endpoint.getSubject(), endpoint.getStream());
     long start = System.nanoTime();
     try {
-      interceptorChain.execute(msg, this::doAccept);
+      interceptorChain.execute(message, this::doAccept);
     } catch (Exception e) {
-      msg.nak();
+      message.nak();
     } finally {
       observer.onProcessed(endpoint.getSubject(), endpoint.getStream(), System.nanoTime() - start);
     }
   }
 
-  private void doAccept(Message msg) {
+  private void doAccept(Message message) {
     Object[] args;
     try {
-      args = messageArgumentResolver.resolveArguments(endpoint.getMethod().getParameters(), msg);
+      args =
+          messageArgumentResolver.resolveArguments(endpoint.getMethod().getParameters(), message);
     } catch (Exception e) {
-      logResolutionException(msg, e);
+      logResolutionException(message, e);
       if (!endpoint.getDeadLetterSubject().isEmpty()) {
-        publishDeadLetter(msg, e);
+        publishDeadLetter(message, e);
         observer.onDeadLettered(endpoint.getSubject(), endpoint.getStream());
       }
-      msg.term();
+      message.term();
       observer.onTerminated(endpoint.getSubject(), endpoint.getStream(), e);
       return;
     }
@@ -89,7 +90,7 @@ final class JetStreamInvocation implements Consumer<Message> {
     try {
       endpoint.getMethod().invoke(endpoint.getBean(), args);
       if (endpoint.getAckMode() == AckMode.AUTO) {
-        msg.ack();
+        message.ack();
         observer.onAcked(endpoint.getSubject(), endpoint.getStream());
       }
     } catch (InvocationTargetException | IllegalAccessException e) {
@@ -100,57 +101,57 @@ final class JetStreamInvocation implements Consumer<Message> {
           endpoint.getMethod().getName(),
           cause);
       if (endpoint.getAckMode() == AckMode.AUTO) {
-        if (isLastDelivery(msg)) {
-          publishDeadLetter(msg, cause instanceof Exception ex ? ex : e);
+        if (isLastDelivery(message)) {
+          publishDeadLetter(message, cause instanceof Exception ex ? ex : e);
           observer.onDeadLettered(endpoint.getSubject(), endpoint.getStream());
-          msg.term();
+          message.term();
         } else {
-          msg.nak();
+          message.nak();
           observer.onNacked(endpoint.getSubject(), endpoint.getStream());
         }
       }
     }
   }
 
-  private boolean isLastDelivery(Message msg) {
+  private boolean isLastDelivery(Message message) {
     if (endpoint.getDeadLetterSubject().isEmpty()) {
       return false;
     }
-    NatsJetStreamMetaData meta = msg.metaData();
+    NatsJetStreamMetaData meta = message.metaData();
     return meta != null && meta.deliveredCount() >= endpoint.getMaxDeliveries();
   }
 
-  private void publishDeadLetter(Message msg, @Nullable Exception cause) {
-    Headers headers = buildDeadLetterHeaders(msg, msg.getSubject(), cause);
+  private void publishDeadLetter(Message message, @Nullable Exception cause) {
+    Headers headers = buildDeadLetterHeaders(message, message.getSubject(), cause);
     headers.add("X-Dead-Letter-Stream", endpoint.getStream());
     headers.add("X-Dead-Letter-Durable", endpoint.getDurable());
-    NatsJetStreamMetaData meta = msg.metaData();
+    NatsJetStreamMetaData meta = message.metaData();
     if (meta != null) {
       headers.add("X-Dead-Letter-Delivery", String.valueOf(meta.deliveredCount()));
     }
-    buildAndPublishDeadLetter(connection, endpoint.getDeadLetterSubject(), msg, headers);
+    buildAndPublishDeadLetter(connection, endpoint.getDeadLetterSubject(), message, headers);
   }
 
-  private void logResolutionException(Message msg, Exception e) {
+  private void logResolutionException(Message message, Exception e) {
     String stream = null;
     Long streamSequence = null;
     Long consumerSequence = null;
     Long deliveredCount = null;
     Instant timestamp = null;
 
-    if (msg.metaData() != null) {
-      stream = msg.metaData().getStream();
-      streamSequence = msg.metaData().streamSequence();
-      consumerSequence = msg.metaData().consumerSequence();
-      deliveredCount = msg.metaData().deliveredCount();
-      timestamp = msg.metaData().timestamp().toInstant();
+    if (message.metaData() != null) {
+      stream = message.metaData().getStream();
+      streamSequence = message.metaData().streamSequence();
+      consumerSequence = message.metaData().consumerSequence();
+      deliveredCount = message.metaData().deliveredCount();
+      timestamp = message.metaData().timestamp().toInstant();
     }
 
     log.error(
         "Unable to resolve arguments for NATS JetStream listener={}.{}, terminating message, subject={}, stream={}, streamSequence={}, consumerSequence={}, deliveredCount={}, timestamp={}",
         AopUtils.getTargetClass(endpoint.getBean()).getSimpleName(),
         endpoint.getMethod().getName(),
-        msg.getSubject(),
+        message.getSubject(),
         stream,
         streamSequence,
         consumerSequence,

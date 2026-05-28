@@ -21,7 +21,8 @@ import java.lang.reflect.Parameter;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Resolves method arguments from a NATS {@link Message}.
+ * Resolves method arguments from a NATS {@link Message} and converts listener return values into
+ * reply messages.
  *
  * @since 0.1.0
  */
@@ -46,4 +47,16 @@ public interface MessageArgumentResolver {
    * @since 0.1.0
    */
   @Nullable Object resolveArgument(Parameter parameter, Message message);
+
+  /**
+   * Converts a listener method return value into a reply {@link Message} addressed to the given
+   * subject. Supports {@link Message}, {@code byte[]}, {@link String}, and arbitrary objects
+   * (serialized to JSON).
+   *
+   * @param result the non-null return value from the listener method
+   * @param replyTo the NATS subject to address the reply to
+   * @return the reply message ready to publish
+   * @since 0.1.0
+   */
+  Message buildReplyMessage(Object result, String replyTo);
 }

@@ -24,38 +24,35 @@ import org.junit.jupiter.api.Test;
 
 class CustomizableOptionsFactoryTests {
 
-  private CustomizableOptionsFactory connectionOptionsFactory;
+  private CustomizableOptionsFactory factory;
 
   @BeforeEach
   void beforeEach() {
-    connectionOptionsFactory = new CustomizableOptionsFactory();
+    factory = new CustomizableOptionsFactory();
   }
 
   @Test
   void givenNoCustomizers_whenGetOptions_thenReturnsDefaultOptions() {
-    Options options = connectionOptionsFactory.getOptions();
+    Options options = factory.getOptions();
 
     assertThat(options).isNotNull();
   }
 
   @Test
   void givenSingleCustomizer_whenGetOptions_thenCustomizerApplied() {
-    connectionOptionsFactory.registerBuilderCustomizer(
-        builder -> builder.connectionName("test-connection"));
+    factory.registerCustomizer(builder -> builder.connectionName("test-connection"));
 
-    Options options = connectionOptionsFactory.getOptions();
+    Options options = factory.getOptions();
 
     assertThat(options.getConnectionName()).isEqualTo("test-connection");
   }
 
   @Test
   void givenMultipleCustomizers_whenGetOptions_thenAllCustomizersApplied() {
-    connectionOptionsFactory.registerBuilderCustomizer(
-        builder -> builder.connectionName("test-connection"));
-    connectionOptionsFactory.registerBuilderCustomizer(
-        builder -> builder.noRandomize().bufferSize(2048));
+    factory.registerCustomizer(builder -> builder.connectionName("test-connection"));
+    factory.registerCustomizer(builder -> builder.noRandomize().bufferSize(2048));
 
-    Options options = connectionOptionsFactory.getOptions();
+    Options options = factory.getOptions();
 
     assertThat(options.getConnectionName()).isEqualTo("test-connection");
     assertThat(options.isNoRandomize()).isTrue();
@@ -64,20 +61,19 @@ class CustomizableOptionsFactoryTests {
 
   @Test
   void givenMultipleCustomizers_whenGetOptions_thenAppliedInOrder() {
-    connectionOptionsFactory.registerBuilderCustomizer(builder -> builder.connectionName("first"));
-    connectionOptionsFactory.registerBuilderCustomizer(builder -> builder.connectionName("second"));
+    factory.registerCustomizer(builder -> builder.connectionName("first"));
+    factory.registerCustomizer(builder -> builder.connectionName("second"));
 
-    Options options = connectionOptionsFactory.getOptions();
+    Options options = factory.getOptions();
 
     assertThat(options.getConnectionName()).isEqualTo("second");
   }
 
   @Test
   void givenCustomizerReturningNewBuilder_whenGetOptions_thenNewBuilderIsUsed() {
-    connectionOptionsFactory.registerBuilderCustomizer(
-        ignored -> new Options.Builder().connectionName("from-new-builder"));
+    factory.registerCustomizer(ignored -> new Options.Builder().connectionName("from-new-builder"));
 
-    Options options = connectionOptionsFactory.getOptions();
+    Options options = factory.getOptions();
 
     assertThat(options.getConnectionName()).isEqualTo("from-new-builder");
   }

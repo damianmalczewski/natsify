@@ -29,6 +29,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages JetStream consumer handlers for registered {@link JetStreamListenerEndpoint endpoints}.
@@ -36,6 +38,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @since 0.1.0
  */
 public class JetStreamMessageListenerContainer implements MessageListenerContainer {
+
+  private static final Logger log =
+      LoggerFactory.getLogger(JetStreamMessageListenerContainer.class);
 
   private final JetStreamListenerEndpointRegistry registry;
   private final MessageArgumentResolver argumentResolver;
@@ -97,6 +102,8 @@ public class JetStreamMessageListenerContainer implements MessageListenerContain
         handler = createPullHandler(connection, endpoint, stream, configuration);
       }
       handlers.add(handler);
+      log.debug("Starting handler={}", handler);
+      ;
       handler.start();
     }
   }
@@ -110,6 +117,7 @@ public class JetStreamMessageListenerContainer implements MessageListenerContain
   public synchronized void stop() {
     List<RuntimeException> failures = new ArrayList<>();
     for (JetStreamHandler handler : handlers) {
+      log.debug("Stopping handler={}", handler);
       try {
         handler.stop();
       } catch (RuntimeException e) {

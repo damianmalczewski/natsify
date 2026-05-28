@@ -18,6 +18,8 @@ package io.github.malczuuu.natsify.core;
 
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Contract for publishing messages to NATS subjects.
@@ -92,4 +94,41 @@ public interface NatsOperations {
    * @since 0.1.0
    */
   <T> void publish(String subject, Headers headers, T bodyAsObject);
+
+  /**
+   * Sends a request to the given subject and returns a future that completes with the reply.
+   * Completes exceptionally with {@link java.util.concurrent.TimeoutException} if no reply arrives
+   * within the given timeout.
+   *
+   * @param subject the NATS subject
+   * @param payload the request body
+   * @param timeout how long to wait for a reply
+   * @return future that completes with the reply message
+   */
+  CompletableFuture<NatsReply> request(String subject, byte[] payload, Duration timeout);
+
+  /**
+   * Sends a request to the given subject and returns a future that completes with the reply.
+   * Completes exceptionally with {@link java.util.concurrent.TimeoutException} if no reply arrives
+   * within the given timeout.
+   *
+   * @param subject the NATS subject
+   * @param payload the request body, encoded as UTF-8
+   * @param timeout how long to wait for a reply
+   * @return future that completes with the reply message
+   */
+  CompletableFuture<NatsReply> request(String subject, String payload, Duration timeout);
+
+  /**
+   * Sends a request to the given subject and returns a future that completes with the reply.
+   * Completes exceptionally with {@link java.util.concurrent.TimeoutException} if no reply arrives
+   * within the given timeout.
+   *
+   * @param subject the NATS subject
+   * @param payload the request body, serialized to JSON
+   * @param timeout how long to wait for a reply
+   * @param <T> the payload object type
+   * @return future that completes with the reply message
+   */
+  <T> CompletableFuture<NatsReply> request(String subject, T payload, Duration timeout);
 }

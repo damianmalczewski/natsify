@@ -51,11 +51,11 @@ class SimpleMessageArgumentResolverTests {
 
   @Test
   void givenMessageParam_whenResolved_thenReturnsMessageAsIs() {
-    Message msg = message("body".getBytes(StandardCharsets.UTF_8));
+    Message message = message("body".getBytes(StandardCharsets.UTF_8));
 
-    Object result = resolver.resolveArgument(param("withMessage", Message.class), msg);
+    Object result = resolver.resolveArgument(param("withMessage", Message.class), message);
 
-    assertThat(result).isSameAs(msg);
+    assertThat(result).isSameAs(message);
   }
 
   @Test
@@ -78,19 +78,19 @@ class SimpleMessageArgumentResolverTests {
 
   @Test
   void givenStringParamWithNullData_whenResolved_thenReturnsNull() {
-    Message msg = Mockito.mock(Message.class);
-    Mockito.when(msg.getData()).thenReturn(null);
+    Message message = Mockito.mock(Message.class);
+    Mockito.when(message.getData()).thenReturn(null);
 
-    Object result = resolver.resolveArgument(param("withString", String.class), msg);
+    Object result = resolver.resolveArgument(param("withString", String.class), message);
 
     assertThat(result).isNull();
   }
 
   @Test
   void givenNatsSubjectAnnotation_whenResolved_thenReturnsMessageSubject() {
-    Message msg = NatsMessage.builder().subject("events.created").data(new byte[0]).build();
+    Message message = NatsMessage.builder().subject("events.created").data(new byte[0]).build();
 
-    Object result = resolver.resolveArgument(param("withSubject", String.class), msg);
+    Object result = resolver.resolveArgument(param("withSubject", String.class), message);
 
     assertThat(result).isEqualTo("events.created");
   }
@@ -98,9 +98,9 @@ class SimpleMessageArgumentResolverTests {
   @Test
   void givenNatsSubjectAnnotationOverridesStringBodyResolution_whenResolved_thenReturnsSubject() {
     byte[] body = "body-content".getBytes(StandardCharsets.UTF_8);
-    Message msg = NatsMessage.builder().subject("my.subject").data(body).build();
+    Message message = NatsMessage.builder().subject("my.subject").data(body).build();
 
-    Object result = resolver.resolveArgument(param("withSubject", String.class), msg);
+    Object result = resolver.resolveArgument(param("withSubject", String.class), message);
 
     assertThat(result).isEqualTo("my.subject");
   }
@@ -231,10 +231,10 @@ class SimpleMessageArgumentResolverTests {
 
   @Test
   void givenObjectParamWithNullData_whenResolved_thenReturnsNull() {
-    Message msg = Mockito.mock(Message.class);
-    Mockito.when(msg.getData()).thenReturn(null);
+    Message message = Mockito.mock(Message.class);
+    Mockito.when(message.getData()).thenReturn(null);
 
-    Object result = resolver.resolveArgument(param("withObject", SampleMessage.class), msg);
+    Object result = resolver.resolveArgument(param("withObject", SampleMessage.class), message);
 
     assertThat(result).isNull();
   }
@@ -278,11 +278,11 @@ class SimpleMessageArgumentResolverTests {
   @Test
   void givenMetaDataParam_whenResolved_thenReturnsMessageMetaData() {
     NatsJetStreamMetaData metaData = Mockito.mock(NatsJetStreamMetaData.class);
-    Message msg = Mockito.mock(Message.class);
-    Mockito.when(msg.metaData()).thenReturn(metaData);
+    Message message = Mockito.mock(Message.class);
+    Mockito.when(message.metaData()).thenReturn(metaData);
 
     Object result =
-        resolver.resolveArgument(param("withMetaData", NatsJetStreamMetaData.class), msg);
+        resolver.resolveArgument(param("withMetaData", NatsJetStreamMetaData.class), message);
 
     assertThat(result).isSameAs(metaData);
   }
@@ -328,7 +328,7 @@ class SimpleMessageArgumentResolverTests {
   @SuppressWarnings("unused")
   private static class Methods {
 
-    void withMessage(Message msg) {}
+    void withMessage(Message message) {}
 
     void withBytes(byte[] b) {}
 

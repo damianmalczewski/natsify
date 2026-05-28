@@ -16,11 +16,11 @@
 
 package io.github.malczuuu.natsify.autoconfigure;
 
+import io.github.malczuuu.natsify.connection.ConnectionConfigurer;
 import io.github.malczuuu.natsify.connection.ConnectionManager;
 import io.github.malczuuu.natsify.connection.ConnectionOptionsBuilderCustomizer;
 import io.github.malczuuu.natsify.connection.ConnectionOptionsFactory;
 import io.github.malczuuu.natsify.connection.CustomizableOptionsFactory;
-import io.github.malczuuu.natsify.connection.DefaultConnectionManager;
 import io.github.malczuuu.natsify.connection.JetStreamConfigurer;
 import io.github.malczuuu.natsify.connection.JetStreamManager;
 import io.github.malczuuu.natsify.core.NatsMessageInterceptor;
@@ -79,7 +79,7 @@ public final class NatsAutoConfiguration {
       NatsConnectionDetails connectionDetails,
       List<ConnectionOptionsBuilderCustomizer> customizers) {
     CustomizableOptionsFactory connectionOptionsFactory = new CustomizableOptionsFactory();
-    connectionOptionsFactory.registerBuilderCustomizer(
+    connectionOptionsFactory.registerCustomizer(
         it -> {
           String connectionName = properties.getConnectionName();
           if (connectionName == null) {
@@ -113,13 +113,13 @@ public final class NatsAutoConfiguration {
               .maxPingsOut(properties.getMaxPingsOut())
               .requestCleanupInterval(properties.getRequestCleanupInterval());
         });
-    customizers.forEach(connectionOptionsFactory::registerBuilderCustomizer);
+    customizers.forEach(connectionOptionsFactory::registerCustomizer);
     return connectionOptionsFactory;
   }
 
   @Bean
   @ConditionalOnMissingBean(ConnectionManager.class)
-  DefaultConnectionManager natsDefaultConnectionManager(
+  ConnectionConfigurer connectionConfigurer(
       NatsProperties properties,
       ConnectionOptionsFactory connectionOptionsFactory,
       NatsListenerEndpointRegistry natsListenerEndpointRegistry,
@@ -130,7 +130,7 @@ public final class NatsAutoConfiguration {
       List<NatsMessageInterceptor> natsMessageInterceptors,
       JsonMapper jsonMapper) {
     MessageArgumentResolver argumentResolver = new SimpleMessageArgumentResolver(jsonMapper);
-    return new DefaultConnectionManager(
+    return new ConnectionConfigurer(
         connectionOptionsFactory.getOptions(),
         List.of(
             new NatsMessageListenerContainer(

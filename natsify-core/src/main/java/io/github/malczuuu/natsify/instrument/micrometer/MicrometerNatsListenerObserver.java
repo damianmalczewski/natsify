@@ -101,6 +101,32 @@ public class MicrometerNatsListenerObserver implements NatsListenerObserver, Met
   }
 
   /**
+   * Called when a handler returned a non-null value but the message carried no reply-to address.
+   *
+   * @param subject the NATS subject
+   * @param queue the queue group name, or empty string if not in a queue group
+   * @since 0.1.0
+   */
+  @Override
+  public void onReplyDiscarded(String subject, String queue) {
+    Tags tags = Tags.of(Tag.of("subject", subject), Tag.of("queue", queue));
+    meterRegistry.counter("nats.listener.messages.reply.discarded", tags).increment();
+  }
+
+  /**
+   * Called when publishing a reply fails after the handler returned a non-null value.
+   *
+   * @param subject the NATS subject
+   * @param queue the queue group name, or empty string if not in a queue group
+   * @since 0.1.0
+   */
+  @Override
+  public void onReplyFailed(String subject, String queue) {
+    Tags tags = Tags.of(Tag.of("subject", subject), Tag.of("queue", queue));
+    meterRegistry.counter("nats.listener.messages.reply.error", tags).increment();
+  }
+
+  /**
    * Called after every invocation (success or failure) with the total processing duration.
    *
    * @param subject the NATS subject

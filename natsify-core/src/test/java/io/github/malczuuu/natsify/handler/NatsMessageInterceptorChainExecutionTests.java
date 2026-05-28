@@ -91,9 +91,9 @@ class NatsMessageInterceptorChainExecutionTests {
     NatsMessageInterceptor high =
         new NatsMessageInterceptor() {
           @Override
-          public void intercept(Message msg, NatsMessageInterceptorChain chain) {
+          public void intercept(Message message, NatsMessageInterceptorChain chain) {
             calls.add("high");
-            chain.proceed(msg);
+            chain.proceed(message);
           }
 
           @Override
@@ -103,12 +103,9 @@ class NatsMessageInterceptorChainExecutionTests {
         };
 
     NatsMessageInterceptor low =
-        new NatsMessageInterceptor() {
-          @Override
-          public void intercept(Message msg, NatsMessageInterceptorChain chain) {
-            calls.add("low");
-            chain.proceed(msg);
-          }
+        (message1, chain) -> {
+          calls.add("low");
+          chain.proceed(message1);
         };
 
     new NatsMessageInterceptorChainExecution(List.of(low, high))

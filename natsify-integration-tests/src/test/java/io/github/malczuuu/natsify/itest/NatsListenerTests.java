@@ -111,10 +111,10 @@ class NatsListenerTests extends AbstractIntegrationTests {
       throws Exception {
     Headers headers = new Headers();
     headers.add("X-Key", "header-value");
-    Message msg =
+    Message message =
         NatsMessage.builder().subject("combo.header").headers(headers).data(new byte[0]).build();
 
-    natsOperations.publish(msg);
+    natsOperations.publish(message);
 
     String received = handler.headerValues.poll(5, TimeUnit.SECONDS);
     assertThat(received).isEqualTo("header-value");
@@ -126,10 +126,10 @@ class NatsListenerTests extends AbstractIntegrationTests {
     Headers headers = new Headers();
     headers.add("X-Foo", "foo-value");
     headers.add("X-Bar", "bar-value");
-    Message msg =
+    Message message =
         NatsMessage.builder().subject("combo.headers").headers(headers).data(new byte[0]).build();
 
-    natsOperations.publish(msg);
+    natsOperations.publish(message);
 
     Headers received = handler.headersValues.poll(5, TimeUnit.SECONDS);
     assertThat(received).isNotNull();
@@ -184,14 +184,14 @@ class NatsListenerTests extends AbstractIntegrationTests {
       throws Exception {
     Headers headers = new Headers();
     headers.add("X-Type", "by-type-value");
-    Message msg =
+    Message message =
         NatsMessage.builder()
             .subject("combo.headers-by-type")
             .headers(headers)
             .data(new byte[0])
             .build();
 
-    natsOperations.publish(msg);
+    natsOperations.publish(message);
 
     Headers received = handler.headersValuesByType.poll(5, TimeUnit.SECONDS);
     assertThat(received).isNotNull();

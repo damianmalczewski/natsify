@@ -91,9 +91,12 @@ final class JetStreamPullHandler implements JetStreamHandler {
             });
     this.executor = executor;
     running = true;
-    executor.submit(this::runPollPool);
+    executor.execute(this::runPollPool);
 
-    log.info("Subscribed pull JetStream listener to subject={}", endpoint.getSubject());
+    log.info(
+        "Subscribed pull JetStream listener to stream={}, subject={}",
+        endpoint.getStream(),
+        endpoint.getSubject());
   }
 
   @Override
@@ -135,8 +138,8 @@ final class JetStreamPullHandler implements JetStreamHandler {
     while (running && !Thread.currentThread().isInterrupted()) {
       try {
         List<Message> messages = sub.fetch(fetchBatchSize, fetchTimeout);
-        for (Message msg : messages) {
-          messageConsumer.accept(msg);
+        for (Message message : messages) {
+          messageConsumer.accept(message);
         }
       } catch (Exception e) {
         if (!running || Thread.currentThread().isInterrupted()) {

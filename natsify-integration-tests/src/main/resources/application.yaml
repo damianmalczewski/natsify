@@ -1,0 +1,6 @@
+nats:
+  combo:
+    subject: combo.from-property
+    queue: property-queue-group
+natsify:
+  auto-stream-creation: true

@@ -30,22 +30,25 @@ import io.nats.client.Connection;
 import io.nats.client.Message;
 import io.nats.client.impl.NatsJetStreamMetaData;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import tools.jackson.databind.json.JsonMapper;
 
 class JetStreamInvocationTests {
 
-  MessageArgumentResolver argumentResolver;
-  Message message;
-  Connection connection;
+  private final MessageArgumentResolver argumentResolver =
+      new SimpleMessageArgumentResolver(JsonMapper.builder().findAndAddModules().build());
+
+  private Message message;
+  private Connection connection;
 
   private Listener listener;
 
   @BeforeEach
   void beforeEach() {
-    argumentResolver = Mockito.mock(MessageArgumentResolver.class);
     message = Mockito.mock(Message.class);
     connection = Mockito.mock(Connection.class);
     listener = new Listener();
@@ -53,8 +56,6 @@ class JetStreamInvocationTests {
 
   @Test
   void givenAutoAckMode_whenHandlerSucceeds_thenAcks() {
-    when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
-
     invocation(endpoint("handle", AckMode.AUTO)).accept(message);
 
     verify(message).ack();
@@ -64,8 +65,6 @@ class JetStreamInvocationTests {
 
   @Test
   void givenManualAckMode_whenHandlerSucceeds_thenNoAckNorNak() {
-    when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
-
     invocation(endpoint("handle", AckMode.MANUAL)).accept(message);
 
     verify(message, never()).ack();
@@ -74,8 +73,6 @@ class JetStreamInvocationTests {
 
   @Test
   void givenAutoAckMode_whenHandlerThrows_thenNaks() {
-    when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
-
     invocation(endpoint("handleThrowing", AckMode.AUTO)).accept(message);
 
     verify(message).nak();
@@ -84,8 +81,6 @@ class JetStreamInvocationTests {
 
   @Test
   void givenManualAckMode_whenHandlerThrows_thenNoNakNorAck() {
-    when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
-
     invocation(endpoint("handleThrowing", AckMode.MANUAL)).accept(message);
 
     verify(message, never()).nak();
@@ -94,10 +89,10 @@ class JetStreamInvocationTests {
 
   @Test
   void givenResolverThrows_whenInvoked_thenTerminates() {
-    when(argumentResolver.resolveArguments(any(), any()))
-        .thenThrow(new RuntimeException("bad payload"));
+    when(message.getData()).thenReturn("not-valid-json".getBytes(StandardCharsets.UTF_8));
 
-    invocation(endpoint("handle", AckMode.AUTO)).accept(message);
+    invocation(endpoint("handleWithPayload", AckMode.AUTO, Listener.SamplePayload.class))
+        .accept(message);
 
     verify(message).term();
     verify(message, never()).ack();
@@ -113,7 +108,6 @@ class JetStreamInvocationTests {
 
   @Test
   void givenDlqConfigured_whenHandlerThrowsOnLastDelivery_thenTermsAndPublishesToDlq() {
-    when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
     NatsJetStreamMetaData meta = Mockito.mock(NatsJetStreamMetaData.class);
     when(meta.deliveredCount()).thenReturn(3L);
     when(message.metaData()).thenReturn(meta);
@@ -129,7 +123,6 @@ class JetStreamInvocationTests {
 
   @Test
   void givenDlqConfigured_whenHandlerThrowsBeforeLastDelivery_thenNaks() {
-    when(argumentResolver.resolveArguments(any(), any())).thenReturn(new Object[0]);
     NatsJetStreamMetaData meta = Mockito.mock(NatsJetStreamMetaData.class);
     when(meta.deliveredCount()).thenReturn(2L);
     when(message.metaData()).thenReturn(meta);
@@ -143,11 +136,13 @@ class JetStreamInvocationTests {
 
   @Test
   void givenDlqConfigured_whenResolverThrows_thenTermsAndPublishesToDlq() {
-    when(argumentResolver.resolveArguments(any(), any()))
-        .thenThrow(new RuntimeException("bad payload"));
+    when(message.getData()).thenReturn("not-valid-json".getBytes(StandardCharsets.UTF_8));
 
     JetStreamListenerObserver observer = Mockito.mock(JetStreamListenerObserver.class);
-    invocation(endpointWithDlq("handle", "dlq.subject", 3), observer).accept(message);
+    invocation(
+            endpointWithDlq("handleWithPayload", "dlq.subject", 3, Listener.SamplePayload.class),
+            observer)
+        .accept(message);
 
     verify(message).term();
     verify(connection).publish(any(Message.class));
@@ -164,8 +159,13 @@ class JetStreamInvocationTests {
   }
 
   private JetStreamListenerEndpoint endpoint(String methodName, AckMode ackMode) {
+    return endpoint(methodName, ackMode, new Class<?>[0]);
+  }
+
+  private JetStreamListenerEndpoint endpoint(
+      String methodName, AckMode ackMode, Class<?>... paramTypes) {
     try {
-      Method method = Listener.class.getDeclaredMethod(methodName);
+      Method method = Listener.class.getDeclaredMethod(methodName, paramTypes);
       method.setAccessible(true);
       return JetStreamListenerEndpoint.builder()
           .withBean(listener)
@@ -185,8 +185,13 @@ class JetStreamInvocationTests {
 
   private JetStreamListenerEndpoint endpointWithDlq(
       String methodName, String dlqSubject, int maxDeliveries) {
+    return endpointWithDlq(methodName, dlqSubject, maxDeliveries, new Class<?>[0]);
+  }
+
+  private JetStreamListenerEndpoint endpointWithDlq(
+      String methodName, String dlqSubject, int maxDeliveries, Class<?>... paramTypes) {
     try {
-      Method method = Listener.class.getDeclaredMethod(methodName);
+      Method method = Listener.class.getDeclaredMethod(methodName, paramTypes);
       method.setAccessible(true);
       return JetStreamListenerEndpoint.builder()
           .withBean(listener)
@@ -218,5 +223,11 @@ class JetStreamInvocationTests {
     void handleThrowing() {
       throw new RuntimeException("boom");
     }
+
+    void handleWithPayload(SamplePayload payload) {
+      called = true;
+    }
+
+    record SamplePayload(String name) {}
   }
 }

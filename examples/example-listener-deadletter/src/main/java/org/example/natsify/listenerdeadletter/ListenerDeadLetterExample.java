@@ -50,22 +50,23 @@ public class ListenerDeadLetterExample {
   }
 
   @NatsListener(subject = "dlq.telemetry")
-  public void onDeadLetter(Message msg) {
-    deadLetters.add(capture(msg));
-    log.info("Received dead-letter on subject={}", msg.getSubject());
+  public void onDeadLetter(Message message) {
+    deadLetters.add(capture(message));
+    log.info("Received dead-letter on subject={}", message.getSubject());
   }
 
   public void clear() {
     deadLetters.clear();
   }
 
-  private static DeadLetteredMessage capture(Message msg) {
-    String body = msg.getData() != null ? new String(msg.getData(), StandardCharsets.UTF_8) : "";
+  private static DeadLetteredMessage capture(Message message) {
+    String body =
+        message.getData() != null ? new String(message.getData(), StandardCharsets.UTF_8) : "";
     Map<String, List<String>> headers = new LinkedHashMap<>();
-    Headers msgHeaders = msg.getHeaders();
-    if (msgHeaders != null) {
-      for (String key : msgHeaders.keySet()) {
-        List<String> values = msgHeaders.get(key);
+    Headers messageHeaders = message.getHeaders();
+    if (messageHeaders != null) {
+      for (String key : messageHeaders.keySet()) {
+        List<String> values = messageHeaders.get(key);
         if (values != null) {
           headers.put(key, List.copyOf(values));
         }

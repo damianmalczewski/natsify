@@ -20,12 +20,17 @@ import io.github.malczuuu.natsify.annotation.NatsHeader;
 import io.github.malczuuu.natsify.annotation.NatsHeaders;
 import io.github.malczuuu.natsify.annotation.NatsListener;
 import io.github.malczuuu.natsify.annotation.NatsPayload;
+import io.github.malczuuu.natsify.annotation.NatsReplyTo;
 import io.nats.client.Message;
 import io.nats.client.impl.Headers;
+import io.nats.client.impl.NatsMessage;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -46,6 +51,7 @@ public class NatsListenerComponent {
   public final BlockingQueue<List<SampleMessage>> genericLists = new LinkedBlockingQueue<>();
   public final BlockingQueue<SampleMessage[]> arrays = new LinkedBlockingQueue<>();
   public final BlockingQueue<Message> deadLetterMessages = new LinkedBlockingQueue<>();
+  public final BlockingQueue<Message> rpcMessages = new LinkedBlockingQueue<>();
 
   @NatsListener(subject = "combo.no-args")
   public void handleNoArgs() {
@@ -53,8 +59,8 @@ public class NatsListenerComponent {
   }
 
   @NatsListener(subject = "combo.message")
-  public void handleMessage(Message msg) {
-    messages.add(msg);
+  public void handleMessage(Message message) {
+    messages.add(message);
   }
 
   @NatsListener(subject = "combo.bytes")
@@ -123,9 +129,47 @@ public class NatsListenerComponent {
   }
 
   @NatsListener(subject = "combo.dead-letter")
-  public void handleDeadLetter(Message msg) {
-    deadLetterMessages.add(msg);
+  public void handleDeadLetter(Message message) {
+    deadLetterMessages.add(message);
   }
+
+  @NatsListener(subject = "rpc.bytes")
+  public byte[] handleRpcBytes(byte[] payload) {
+    return payload;
+  }
+
+  @NatsListener(subject = "rpc.string")
+  public String handleRpcString(String payload) {
+    return payload.toUpperCase(Locale.ROOT);
+  }
+
+  @NatsListener(subject = "rpc.object")
+  public SampleMessage handleRpcObject(SampleMessage payload) {
+    return new SampleMessage(payload.name().toUpperCase(Locale.ROOT), payload.value() * 2);
+  }
+
+  @NatsListener(subject = "rpc.message")
+  public Message handleRpcMessage(Message message) {
+    rpcMessages.add(message);
+    return NatsMessage.builder()
+        .subject(message.getReplyTo() != null ? message.getReplyTo() : "")
+        .data(
+            ("echo:" + new String(message.getData(), StandardCharsets.UTF_8))
+                .getBytes(StandardCharsets.UTF_8))
+        .build();
+  }
+
+  @NatsListener(subject = "rpc.reply-to-param")
+  public void handleRpcWithReplyToParam(String payload, @NatsReplyTo @Nullable String replyTo) {
+    replyToValues.add(replyTo != null ? replyTo : "");
+  }
+
+  @NatsListener(subject = "rpc.no-reply-to")
+  public String handleRpcNoReplyTo(String payload) {
+    return payload + "-reply";
+  }
+
+  public final BlockingQueue<String> replyToValues = new LinkedBlockingQueue<>();
 
   public void clearAll() {
     messages.clear();
@@ -142,5 +186,7 @@ public class NatsListenerComponent {
     genericLists.clear();
     arrays.clear();
     deadLetterMessages.clear();
+    replyToValues.clear();
+    rpcMessages.clear();
   }
 }

@@ -70,6 +70,25 @@ public interface NatsListenerObserver {
   default void onDeadLettered(String subject, String queue) {}
 
   /**
+   * Called when a handler returned a non-null value but the message carried no reply-to address, so
+   * the reply was discarded.
+   *
+   * @param subject the NATS subject
+   * @param queue the queue group name, or empty string if not in a queue group
+   * @since 0.1.0
+   */
+  default void onReplyDiscarded(String subject, String queue) {}
+
+  /**
+   * Called when publishing a reply fails after the handler returned a non-null value.
+   *
+   * @param subject the NATS subject
+   * @param queue the queue group name, or empty string if not in a queue group
+   * @since 0.1.0
+   */
+  default void onReplyFailed(String subject, String queue) {}
+
+  /**
    * Called after every invocation (success or failure) with the total processing duration.
    *
    * @param subject the NATS subject

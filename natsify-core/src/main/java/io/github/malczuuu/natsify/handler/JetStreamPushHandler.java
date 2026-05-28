@@ -80,7 +80,10 @@ final class JetStreamPushHandler implements JetStreamHandler {
         subscription =
             stream.subscribe(
                 endpoint.getSubject(), dispatcher, messageConsumer::accept, false, options);
-        log.info("Subscribed push JetStream listener to subject={}", endpoint.getSubject());
+        log.info(
+            "Subscribed push JetStream listener to stream={}, subject={}",
+            endpoint.getStream(),
+            endpoint.getSubject());
       } else {
         subscription =
             stream.subscribe(
@@ -91,7 +94,8 @@ final class JetStreamPushHandler implements JetStreamHandler {
                 false,
                 options);
         log.info(
-            "Subscribed push JetStream listener to subject={}, queue={}",
+            "Subscribed push JetStream listener to stream={}, subject={}, queue={}",
+            endpoint.getStream(),
             endpoint.getSubject(),
             endpoint.getQueue());
       }

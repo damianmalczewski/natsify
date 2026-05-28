@@ -35,6 +35,7 @@ import org.mockito.Mockito;
 
 class JetStreamPushHandlerTests {
 
+  private static final Object BEAN = new Object();
   private static final Method METHOD;
 
   static {
@@ -56,7 +57,7 @@ class JetStreamPushHandlerTests {
 
     JetStreamListenerEndpoint endpoint =
         JetStreamListenerEndpoint.builder()
-            .withBean(new Object())
+            .withBean(BEAN)
             .withMethod(METHOD)
             .withSubject("test.subject")
             .withStream("TEST")
