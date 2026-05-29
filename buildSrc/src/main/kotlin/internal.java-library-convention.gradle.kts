@@ -1,5 +1,6 @@
 plugins {
     id("internal.java-convention")
+    id("internal.java-spotless-convention")
     id("java-library")
 }
 

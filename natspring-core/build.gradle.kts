@@ -1,9 +1,9 @@
 plugins {
+    id("com.gradleup.nmcp")
     id("internal.errorprone-convention")
     id("internal.jacoco-convention")
     id("internal.java-library-convention")
     id("internal.publishing-convention")
-    alias(libs.plugins.nmcp)
 }
 
 dependencies {

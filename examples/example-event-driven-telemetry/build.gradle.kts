@@ -1,19 +1,20 @@
+import com.diffplug.spotless.LineEnding
+
 plugins {
+    id("com.diffplug.spotless")
     id("internal.java-convention")
     id("internal.jacoco-convention")
-    alias(libs.plugins.spring.boot)
+    id("org.springframework.boot")
 }
 
 dependencies {
-    implementation(libs.spring.boot.starter.actuator)
+    implementation(project(":natspring-starter"))
     implementation(libs.spring.boot.starter.data.mongodb)
     implementation(libs.spring.boot.starter.webmvc)
-    implementation(project(":natspring-starter"))
 
-    testImplementation(libs.spring.boot.starter.actuator.test)
-    testImplementation(libs.spring.boot.starter.webmvc.test)
+    testImplementation(project(":natspring-starter-test"))
     testImplementation(libs.spring.boot.starter.data.mongodb.test)
-    testImplementation(libs.spring.boot.resttestclient)
+    testImplementation(libs.spring.boot.starter.webmvc.test)
     testImplementation(libs.spring.boot.testcontainers)
     testImplementation(libs.testcontainers.junit.jupiter)
     testImplementation(libs.testcontainers.mongodb)
@@ -25,5 +26,27 @@ dependencies {
 tasks.withType<Jar>().configureEach {
     if (name != "bootJar") {
         enabled = false
+    }
+}
+
+spotless {
+    java {
+        target("src/**/*.java")
+        targetExclude("build/**")
+
+        googleJavaFormat("1.28.0")
+        forbidWildcardImports()
+        endWithNewline()
+        lineEndings = LineEnding.UNIX
+    }
+
+    format("yaml") {
+        target("src/**/*.yml", "src/**/*.yaml")
+        targetExclude("build/**")
+
+        trimTrailingWhitespace()
+        leadingTabsToSpaces(2)
+        endWithNewline()
+        lineEndings = LineEnding.UNIX
     }
 }

@@ -15,7 +15,10 @@ repositories {
 dependencies {
     implementation(plugin(libs.plugins.errorprone))
     implementation(plugin(libs.plugins.idea.ext))
-    implementation(plugin(libs.plugins.kotlin.jvm))
+    implementation(plugin(libs.plugins.spotless))
+    implementation(plugin(libs.plugins.spring.boot))
+    implementation(plugin(libs.plugins.nmcp.core))
+    implementation(plugin(libs.plugins.nmcp.aggregation))
 }
 
 fun plugin(plugin: Provider<PluginDependency>): Provider<String> = plugin.map {

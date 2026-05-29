@@ -1,14 +1,14 @@
 plugins {
+    id("com.gradleup.nmcp")
     id("internal.errorprone-convention")
     id("internal.jacoco-convention")
     id("internal.java-library-convention")
     id("internal.publishing-convention")
-    alias(libs.plugins.nmcp)
 }
 
 dependencies {
-    api(libs.spring.boot.autoconfigure)
     api(project(":natspring-core"))
+    api(libs.spring.boot.autoconfigure)
 
     compileOnly(libs.spring.boot.health)
     compileOnly(libs.spring.boot.testcontainers)

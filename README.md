@@ -707,7 +707,7 @@ simplest way to build the project is to run:
 ./gradlew
 ```
 
-**Note** that the `natsify-integration-tests` module uses Testcontainers to spin up a real NATS server. **Docker must
+**Note** that the `natspring-integration-tests` module uses Testcontainers to spin up a real NATS server. **Docker must
 be running** for these tests to pass.
 
 ---
