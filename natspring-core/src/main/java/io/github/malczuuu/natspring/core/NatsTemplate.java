@@ -34,7 +34,7 @@ import tools.jackson.databind.json.JsonMapper;
  *
  * @since 0.1.0
  */
-public class NatsTemplate implements NatsOperations {
+public final class NatsTemplate implements NatsOperations {
 
   private final ConnectionSupplier connectionManager;
   private final JsonMapper jsonMapper;

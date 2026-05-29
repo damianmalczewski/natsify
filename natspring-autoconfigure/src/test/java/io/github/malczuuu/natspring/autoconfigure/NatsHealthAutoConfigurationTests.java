@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import io.github.malczuuu.natspring.connection.ConnectionManager;
+import io.github.malczuuu.natspring.health.NatsHealthIndicator;
 import io.nats.client.Connection;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.health.contributor.Health;

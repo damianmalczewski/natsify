@@ -51,7 +51,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Role;
 import org.springframework.core.env.Environment;
-import org.springframework.util.StringUtils;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -61,9 +60,12 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @AutoConfiguration
 @ConditionalOnBooleanProperty(name = "nats.enabled", matchIfMissing = true)
-@ConditionalOnClass(Connection.class)
+@ConditionalOnClass({Connection.class, JsonMapper.class})
 @EnableConfigurationProperties(NatsProperties.class)
 public final class NatsAutoConfiguration {
+
+  /** Creates a new {@link NatsAutoConfiguration}. */
+  public NatsAutoConfiguration() {}
 
   @Bean
   @ConditionalOnMissingBean(NatsConnectionDetails.class)
@@ -80,39 +82,7 @@ public final class NatsAutoConfiguration {
       List<ConnectionOptionsBuilderCustomizer> customizers) {
     CustomizableOptionsFactory connectionOptionsFactory = new CustomizableOptionsFactory();
     connectionOptionsFactory.registerCustomizer(
-        it -> {
-          String connectionName = properties.getConnectionName();
-          if (connectionName == null) {
-            connectionName = environment.getProperty("spring.application.name");
-          }
-
-          if (StringUtils.hasLength(connectionDetails.getUsername())) {
-            it = it.userInfo(connectionDetails.getUsername(), connectionDetails.getPassword());
-          }
-
-          if (properties.isNoEcho()) {
-            it = it.noEcho();
-          }
-          if (properties.isNoRandomize()) {
-            it = it.noRandomize();
-          }
-          if (properties.getInboxPrefix() != null) {
-            it = it.inboxPrefix(properties.getInboxPrefix());
-          }
-
-          return it.server(connectionDetails.getServer())
-              .connectionName(connectionName)
-              .connectionTimeout(properties.getConnectionTimeout())
-              .socketWriteTimeout(properties.getSocketWriteTimeout())
-              .maxReconnects(properties.getMaxReconnects())
-              .reconnectWait(properties.getReconnectWait())
-              .reconnectJitter(properties.getReconnectJitter())
-              .reconnectJitterTls(properties.getReconnectJitterTls())
-              .reconnectBufferSize(properties.getReconnectBufferSize())
-              .pingInterval(properties.getPingInterval())
-              .maxPingsOut(properties.getMaxPingsOut())
-              .requestCleanupInterval(properties.getRequestCleanupInterval());
-        });
+        new PropertiesOptionsBuilderCustomizer(environment, properties, connectionDetails));
     customizers.forEach(connectionOptionsFactory::registerCustomizer);
     return connectionOptionsFactory;
   }

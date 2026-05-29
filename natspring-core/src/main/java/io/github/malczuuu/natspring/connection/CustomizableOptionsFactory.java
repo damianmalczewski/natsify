@@ -26,7 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @since 0.1.0
  */
-public class CustomizableOptionsFactory implements ConnectionOptionsFactory {
+public final class CustomizableOptionsFactory implements ConnectionOptionsFactory {
 
   private final List<ConnectionOptionsBuilderCustomizer> customizers = new CopyOnWriteArrayList<>();
 

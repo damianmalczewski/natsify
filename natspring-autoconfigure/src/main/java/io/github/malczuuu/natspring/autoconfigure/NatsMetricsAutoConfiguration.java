@@ -48,6 +48,9 @@ import org.springframework.core.annotation.Order;
 @ConditionalOnClass(Connection.class)
 public final class NatsMetricsAutoConfiguration {
 
+  /** Creates a new {@link NatsMetricsAutoConfiguration}. */
+  public NatsMetricsAutoConfiguration() {}
+
   @ConditionalOnClass(MeterRegistry.class)
   @Configuration(proxyBeanMethods = false)
   @Order(0)

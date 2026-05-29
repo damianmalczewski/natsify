@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-/** Spring Boot Testcontainers integration for Natspring Project. */
+/** Spring Boot Health integration for Natspring Project. */
 @NullMarked
-package io.github.malczuuu.natspring.testcontainers;
+package io.github.malczuuu.natspring.health;
 
 import org.jspecify.annotations.NullMarked;

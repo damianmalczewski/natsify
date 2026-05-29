@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.github.malczuuu.natspring.autoconfigure;
+package io.github.malczuuu.natspring.health;
 
 import io.github.malczuuu.natspring.connection.ConnectionManager;
 import io.nats.client.Connection;
