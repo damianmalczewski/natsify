@@ -45,6 +45,7 @@ Requires Spring Boot 4.x.
     - [Metrics](#metrics)
 - [Testing](#testing)
     - [Testcontainers](#testcontainers)
+- [Building from source](#building-from-source)
 
 ## Installation
 
@@ -618,7 +619,7 @@ Tagged with `subject` and `stream`.
 
 | Meter                                        | Type    | Tags        | Description                                      |
 |----------------------------------------------|---------|-------------|--------------------------------------------------|
-| `nats.connection.events`                     | Counter | `event`     | Connection state-change events                   |
+| `nats.connection.events`                     | Counter | `nats`     | Connection state-change events                   |
 | `nats.connection.errors`                     | Counter | `error`     | Server error strings received                    |
 | `nats.connection.exceptions`                 | Counter | `exception` | Client-side exceptions during processing         |
 | `nats.connection.slow.consumer.detected`     | Counter | -           | Slow consumer detections                         |
@@ -686,3 +687,67 @@ class MyIntegrationTests {
 `@ServiceConnection` auto-configures `nats.server` from the running container - no manual property overrides needed.
 
 [nats-testcontainers-java]: https://github.com/AmadeusITGroup/nats-testcontainers-java
+
+## Building from source
+
+<details>
+<summary><b>Expand...</b></summary>
+
+Gradle **9.x+** requires **Java 17** or higher to run. For building the project, Gradle automatically picks up **Java
+25** via **toolchains** and the `foojay-resolver-convention` plugin. This Java version is needed because the project
+uses **ErrorProne** and **NullAway** for static nullness analysis.
+
+The produced artifacts are compatible with **Java 17** thanks to `options.release = 17` in Gradle `JavaCompile` tasks.
+This means that regardless of the Java version used to run Gradle, the resulting bytecode remains compatible.
+
+The **default Gradle tasks** include `spotlessApply` (for code formatting) and `build` (for compilation and tests). The
+simplest way to build the project is to run:
+
+```bash
+./gradlew
+```
+
+**Note** that the `natsify-integration-tests` module uses Testcontainers to spin up a real NATS server. **Docker must
+be running** for these tests to pass.
+
+---
+
+To **execute tests** use `test` task. Tests do not change `options.release` so newer Java API can be used.
+
+```bash
+./gradlew test
+```
+
+---
+
+To **format the code** according to the style defined in [`build.gradle.kts`](./build.gradle.kts) rules use `spotlessApply`
+task. **Note** that **building will fail** if code is not properly formatted.
+
+```bash
+./gradlew spotlessApply
+```
+
+**Note** that if the year has changed, add `-Pspotless.license-year-enabled` flag to update the year in license headers.
+
+```bash
+./gradlew spotlessApply -Pspotless.license-year-enabled
+```
+
+---
+
+To **publish** the built artifacts to **local Maven repository**, use `publishToMavenLocal` task.
+
+```bash
+./gradlew publishToMavenLocal
+```
+
+Note that for using Maven Local artifacts in target projects, you need to add `mavenLocal()` repository.
+
+```kotlin
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+```
+
+</details>
