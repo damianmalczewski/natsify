@@ -36,7 +36,6 @@ public class NatsIntegrationException extends RuntimeException {
    * Creates a new {@link NatsIntegrationException}.
    *
    * @param message the detail message
-   * @since 0.1.0
    */
   public NatsIntegrationException(String message) {
     super(message);
@@ -47,7 +46,6 @@ public class NatsIntegrationException extends RuntimeException {
    *
    * @param message the detail message
    * @param cause the underlying cause
-   * @since 0.1.0
    */
   public NatsIntegrationException(String message, Throwable cause) {
     super(message, cause);
@@ -57,7 +55,6 @@ public class NatsIntegrationException extends RuntimeException {
    * Creates a new {@link NatsIntegrationException}.
    *
    * @param cause the underlying cause
-   * @since 0.1.0
    */
   public NatsIntegrationException(Throwable cause) {
     super(cause);
@@ -70,7 +67,6 @@ public class NatsIntegrationException extends RuntimeException {
    * @param cause the underlying cause
    * @param enableSuppression whether suppression is enabled or disabled
    * @param writableStackTrace whether the stack trace should be writable
-   * @since 0.1.0
    */
   protected NatsIntegrationException(
       String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {

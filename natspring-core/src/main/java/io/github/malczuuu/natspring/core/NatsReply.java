@@ -30,7 +30,6 @@ public interface NatsReply {
    * Returns the raw NATS reply message.
    *
    * @return the underlying {@link Message}
-   * @since 0.1.0
    */
   Message getMessage();
 
@@ -40,7 +39,6 @@ public interface NatsReply {
    * @param type the target type
    * @param <T> the target type
    * @return deserialized value
-   * @since 0.1.0
    */
   <T> T bodyAs(Class<T> type);
 
@@ -50,7 +48,6 @@ public interface NatsReply {
    * @param typeReference the target type reference
    * @param <T> the target type
    * @return deserialized value
-   * @since 0.1.0
    */
   <T> T bodyAs(TypeReference<T> typeReference);
 }

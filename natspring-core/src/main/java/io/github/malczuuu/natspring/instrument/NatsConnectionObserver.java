@@ -29,7 +29,6 @@ public interface NatsConnectionObserver {
    * Returns a no-op implementation that discards all events.
    *
    * @return a no-op {@link NatsConnectionObserver}
-   * @since 0.1.0
    */
   static NatsConnectionObserver noop() {
     return new NatsConnectionObserver() {};
@@ -39,7 +38,6 @@ public interface NatsConnectionObserver {
    * Called when the connection state changes.
    *
    * @param event the connection event
-   * @since 0.1.0
    */
   default void onConnectionEvent(ConnectionListener.Events event) {}
 
@@ -47,7 +45,6 @@ public interface NatsConnectionObserver {
    * Called when the NATS server sends an error string.
    *
    * @param error the error text
-   * @since 0.1.0
    */
   default void onError(String error) {}
 
@@ -55,21 +52,12 @@ public interface NatsConnectionObserver {
    * Called when the client encounters an exception during processing.
    *
    * @param exception the exception
-   * @since 0.1.0
    */
   default void onException(Exception exception) {}
 
-  /**
-   * Called when a slow consumer is detected on the connection.
-   *
-   * @since 0.1.0
-   */
+  /** Called when a slow consumer is detected on the connection. */
   default void onSlowConsumerDetected() {}
 
-  /**
-   * Called when a message is discarded due to a full consumer queue.
-   *
-   * @since 0.1.0
-   */
+  /** Called when a message is discarded due to a full consumer queue. */
   default void onMessageDiscarded() {}
 }

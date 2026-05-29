@@ -30,18 +30,13 @@ public class CustomizableOptionsFactory implements ConnectionOptionsFactory {
 
   private final List<ConnectionOptionsBuilderCustomizer> customizers = new CopyOnWriteArrayList<>();
 
-  /**
-   * Creates a new {@code CustomizableOptionsFactory} with no registered customizers.
-   *
-   * @since 0.1.0
-   */
+  /** Creates a new {@code CustomizableOptionsFactory} with no registered customizers. */
   public CustomizableOptionsFactory() {}
 
   /**
    * Registers a customizer to be applied when building connection options.
    *
    * @param customizer the customizer to register
-   * @since 0.1.0
    */
   public void registerCustomizer(ConnectionOptionsBuilderCustomizer customizer) {
     customizers.add(customizer);
@@ -52,7 +47,6 @@ public class CustomizableOptionsFactory implements ConnectionOptionsFactory {
    * order.
    *
    * @return the built {@link Options}
-   * @since 0.1.0
    */
   @Override
   public Options getOptions() {

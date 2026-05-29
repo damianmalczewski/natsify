@@ -50,7 +50,6 @@ public class NatsListenerAnnotationBeanPostProcessor
    * Creates a new {@code NatsListenerAnnotationBeanPostProcessor}.
    *
    * @param registry registry to register discovered listeners with
-   * @since 0.1.0
    */
   public NatsListenerAnnotationBeanPostProcessor(NatsListenerEndpointRegistry registry) {
     this.registry = registry;
@@ -60,7 +59,6 @@ public class NatsListenerAnnotationBeanPostProcessor
    * Sets the resolver used to evaluate placeholder expressions in annotation attributes.
    *
    * @param resolver the embedded value resolver
-   * @since 0.1.0
    */
   @Override
   public void setEmbeddedValueResolver(StringValueResolver resolver) {
@@ -75,7 +73,6 @@ public class NatsListenerAnnotationBeanPostProcessor
    * @param beanName the bean name
    * @return the bean instance unchanged
    * @throws BeansException if post-processing fails
-   * @since 0.1.0
    */
   @Override
   public @Nullable Object postProcessAfterInitialization(Object bean, String beanName)

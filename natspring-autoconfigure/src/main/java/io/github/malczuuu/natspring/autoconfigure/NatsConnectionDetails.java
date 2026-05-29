@@ -30,7 +30,6 @@ public interface NatsConnectionDetails extends ConnectionDetails {
    * Returns the NATS server URL (e.g. {@code nats://localhost:4222}).
    *
    * @return the server URL
-   * @since 0.1.0
    */
   String getServer();
 
@@ -38,7 +37,6 @@ public interface NatsConnectionDetails extends ConnectionDetails {
    * Returns the username for authentication, or {@code null} if not required.
    *
    * @return the username, or {@code null}
-   * @since 0.1.0
    */
   @Nullable String getUsername();
 
@@ -46,7 +44,6 @@ public interface NatsConnectionDetails extends ConnectionDetails {
    * Returns the password for authentication, or {@code null} if not required.
    *
    * @return the password, or {@code null}
-   * @since 0.1.0
    */
   @Nullable String getPassword();
 }

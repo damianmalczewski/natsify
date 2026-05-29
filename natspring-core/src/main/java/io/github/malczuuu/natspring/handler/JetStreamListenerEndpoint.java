@@ -77,7 +77,6 @@ public final class JetStreamListenerEndpoint {
    * Returns the Spring bean that declares the listener method.
    *
    * @return the listener bean
-   * @since 0.1.0
    */
   public Object getBean() {
     return bean;
@@ -87,7 +86,6 @@ public final class JetStreamListenerEndpoint {
    * Returns the listener method.
    *
    * @return the listener method
-   * @since 0.1.0
    */
   public Method getMethod() {
     return method;
@@ -97,7 +95,6 @@ public final class JetStreamListenerEndpoint {
    * Returns the NATS subject filter for the consumer.
    *
    * @return the NATS subject
-   * @since 0.1.0
    */
   public String getSubject() {
     return subject;
@@ -107,7 +104,6 @@ public final class JetStreamListenerEndpoint {
    * Returns the JetStream stream name.
    *
    * @return the stream name
-   * @since 0.1.0
    */
   public String getStream() {
     return stream;
@@ -117,7 +113,6 @@ public final class JetStreamListenerEndpoint {
    * Returns the durable consumer name, or an empty string for an ephemeral consumer.
    *
    * @return the durable consumer name
-   * @since 0.1.0
    */
   public String getDurable() {
     return durable;
@@ -127,7 +122,6 @@ public final class JetStreamListenerEndpoint {
    * Returns the queue group name for push consumers, or an empty string if none.
    *
    * @return the queue group name
-   * @since 0.1.0
    */
   public String getQueue() {
     return queue;
@@ -137,7 +131,6 @@ public final class JetStreamListenerEndpoint {
    * Returns the consumer type (push or pull).
    *
    * @return the consumer type
-   * @since 0.1.0
    */
   public ConsumerType getConsumerType() {
     return consumerType;
@@ -147,7 +140,6 @@ public final class JetStreamListenerEndpoint {
    * Returns the acknowledgement mode for received messages.
    *
    * @return the ack mode
-   * @since 0.1.0
    */
   public AckMode getAckMode() {
     return ackMode;
@@ -157,7 +149,6 @@ public final class JetStreamListenerEndpoint {
    * Returns the deliver policy controlling which messages the consumer receives.
    *
    * @return the deliver policy
-   * @since 0.1.0
    */
   public DeliverPolicyType getDeliverPolicy() {
     return deliverPolicy;
@@ -168,7 +159,6 @@ public final class JetStreamListenerEndpoint {
    * string if the dead-letter queue is disabled.
    *
    * @return the dead-letter subject
-   * @since 0.1.0
    */
   public String getDeadLetterSubject() {
     return deadLetterSubject;
@@ -179,7 +169,6 @@ public final class JetStreamListenerEndpoint {
    * unlimited.
    *
    * @return the max delivery count
-   * @since 0.1.0
    */
   public int getMaxDeliveries() {
     return maxDeliveries;
@@ -189,7 +178,6 @@ public final class JetStreamListenerEndpoint {
    * Returns a string representation of this listener endpoint.
    *
    * @return string representation
-   * @since 0.1.0
    */
   @Override
   public String toString() {
@@ -210,17 +198,12 @@ public final class JetStreamListenerEndpoint {
    * Returns a new {@link Builder} for constructing a {@link JetStreamListenerEndpoint} instance.
    *
    * @return a new builder
-   * @since 0.1.0
    */
   public static Builder builder() {
     return new Builder();
   }
 
-  /**
-   * Builder for {@link JetStreamListenerEndpoint}.
-   *
-   * @since 0.1.0
-   */
+  /** Builder for {@link JetStreamListenerEndpoint}. */
   public static final class Builder {
 
     private @Nullable Object bean;
@@ -242,7 +225,6 @@ public final class JetStreamListenerEndpoint {
      *
      * @param bean the Spring bean that declares the listener method
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withBean(@Nullable Object bean) {
       this.bean = bean;
@@ -254,7 +236,6 @@ public final class JetStreamListenerEndpoint {
      *
      * @param method the annotated method
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withMethod(@Nullable Method method) {
       this.method = method;
@@ -266,7 +247,6 @@ public final class JetStreamListenerEndpoint {
      *
      * @param subject the NATS subject
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withSubject(@Nullable String subject) {
       this.subject = subject;
@@ -278,7 +258,6 @@ public final class JetStreamListenerEndpoint {
      *
      * @param stream the stream name
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withStream(@Nullable String stream) {
       this.stream = stream;
@@ -290,7 +269,6 @@ public final class JetStreamListenerEndpoint {
      *
      * @param durable the durable consumer name, or an empty string for ephemeral
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withDurable(@Nullable String durable) {
       this.durable = durable;
@@ -302,7 +280,6 @@ public final class JetStreamListenerEndpoint {
      *
      * @param queue the queue group name, or an empty string for none
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withQueue(@Nullable String queue) {
       this.queue = queue;
@@ -314,7 +291,6 @@ public final class JetStreamListenerEndpoint {
      *
      * @param consumerType push or pull consumer type
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withConsumerType(@Nullable ConsumerType consumerType) {
       this.consumerType = consumerType;
@@ -326,7 +302,6 @@ public final class JetStreamListenerEndpoint {
      *
      * @param ackMode the ack mode for received messages
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withAckMode(@Nullable AckMode ackMode) {
       this.ackMode = ackMode;
@@ -338,7 +313,6 @@ public final class JetStreamListenerEndpoint {
      *
      * @param deliverPolicy the deliver policy controlling which messages the consumer receives
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withDeliverPolicy(@Nullable DeliverPolicyType deliverPolicy) {
       this.deliverPolicy = deliverPolicy;
@@ -350,7 +324,6 @@ public final class JetStreamListenerEndpoint {
      *
      * @param deadLetterSubject subject to publish failed messages to
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withDeadLetterSubject(String deadLetterSubject) {
       this.deadLetterSubject = deadLetterSubject;
@@ -363,7 +336,6 @@ public final class JetStreamListenerEndpoint {
      *
      * @param maxDeliveries max delivery count
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withMaxDeliveries(int maxDeliveries) {
       this.maxDeliveries = maxDeliveries;
@@ -375,7 +347,6 @@ public final class JetStreamListenerEndpoint {
      *
      * @return a new {@link JetStreamListenerEndpoint}
      * @throws IllegalArgumentException if configuration constraints are violated
-     * @since 0.1.0
      */
     public JetStreamListenerEndpoint build() {
       if (bean == null) {

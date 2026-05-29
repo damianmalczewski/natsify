@@ -30,11 +30,7 @@ public class NatsListenerEndpointRegistry {
 
   private final List<NatsListenerEndpoint> listeners = new CopyOnWriteArrayList<>();
 
-  /**
-   * Creates a new {@code NatsListenerEndpointRegistry}.
-   *
-   * @since 0.1.0
-   */
+  /** Creates a new {@code NatsListenerEndpointRegistry}. */
   public NatsListenerEndpointRegistry() {}
 
   /**
@@ -42,7 +38,6 @@ public class NatsListenerEndpointRegistry {
    * non-public methods.
    *
    * @param endpoint the listener endpoint to register
-   * @since 0.1.0
    */
   public void register(NatsListenerEndpoint endpoint) {
     endpoint.getMethod().setAccessible(true);
@@ -53,7 +48,6 @@ public class NatsListenerEndpointRegistry {
    * Returns all registered listeners.
    *
    * @return immutable list of registered listener endpoints
-   * @since 0.1.0
    */
   public List<NatsListenerEndpoint> getEndpoints() {
     return Collections.unmodifiableList(listeners);

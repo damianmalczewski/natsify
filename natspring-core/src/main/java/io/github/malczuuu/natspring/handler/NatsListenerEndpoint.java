@@ -51,7 +51,6 @@ public final class NatsListenerEndpoint {
    * Returns the Spring bean that declares the listener method.
    *
    * @return the listener bean
-   * @since 0.1.0
    */
   public Object getBean() {
     return bean;
@@ -61,7 +60,6 @@ public final class NatsListenerEndpoint {
    * Returns the listener method.
    *
    * @return the listener method
-   * @since 0.1.0
    */
   public Method getMethod() {
     return method;
@@ -71,7 +69,6 @@ public final class NatsListenerEndpoint {
    * Returns the NATS subject the listener subscribes to.
    *
    * @return the NATS subject
-   * @since 0.1.0
    */
   public String getSubject() {
     return subject;
@@ -81,7 +78,6 @@ public final class NatsListenerEndpoint {
    * Returns the queue group name, or an empty string if none was specified.
    *
    * @return the queue group name
-   * @since 0.1.0
    */
   public String getQueue() {
     return queue;
@@ -91,7 +87,6 @@ public final class NatsListenerEndpoint {
    * Returns the dead-letter subject, or an empty string if dead-lettering is disabled.
    *
    * @return the dead-letter subject
-   * @since 0.1.0
    */
   public String getDeadLetterSubject() {
     return deadLetterSubject;
@@ -101,7 +96,6 @@ public final class NatsListenerEndpoint {
    * Returns a string representation of this listener endpoint.
    *
    * @return string representation
-   * @since 0.1.0
    */
   @Override
   public String toString() {
@@ -115,17 +109,12 @@ public final class NatsListenerEndpoint {
    * Returns a new {@link Builder} for constructing a {@link NatsListenerEndpoint} instance.
    *
    * @return a new builder
-   * @since 0.1.0
    */
   public static Builder builder() {
     return new Builder();
   }
 
-  /**
-   * Builder for {@link NatsListenerEndpoint}.
-   *
-   * @since 0.1.0
-   */
+  /** Builder for {@link NatsListenerEndpoint}. */
   public static final class Builder {
 
     private @Nullable Object bean;
@@ -141,7 +130,6 @@ public final class NatsListenerEndpoint {
      *
      * @param bean the Spring bean that declares the listener method
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withBean(@Nullable Object bean) {
       this.bean = bean;
@@ -153,7 +141,6 @@ public final class NatsListenerEndpoint {
      *
      * @param method the annotated method
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withMethod(@Nullable Method method) {
       this.method = method;
@@ -165,7 +152,6 @@ public final class NatsListenerEndpoint {
      *
      * @param subject the NATS subject to subscribe to
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withSubject(@Nullable String subject) {
       this.subject = subject;
@@ -177,7 +163,6 @@ public final class NatsListenerEndpoint {
      *
      * @param queue the queue group name, or an empty string for none
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withQueue(@Nullable String queue) {
       this.queue = queue;
@@ -190,7 +175,6 @@ public final class NatsListenerEndpoint {
      * @param deadLetterSubject the subject to publish failed messages to, or an empty string to
      *     disable dead-lettering
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withDeadLetterSubject(String deadLetterSubject) {
       this.deadLetterSubject = deadLetterSubject;
@@ -202,7 +186,6 @@ public final class NatsListenerEndpoint {
      *
      * @return a new {@link NatsListenerEndpoint}
      * @throws IllegalArgumentException if configuration constraints are violated
-     * @since 0.1.0
      */
     public NatsListenerEndpoint build() {
       if (bean == null) {

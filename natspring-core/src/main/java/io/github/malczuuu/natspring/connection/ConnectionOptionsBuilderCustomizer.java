@@ -32,7 +32,6 @@ public interface ConnectionOptionsBuilderCustomizer {
    *
    * @param builder the builder to customize
    * @return the customized builder
-   * @since 0.1.0
    */
   Options.Builder customize(Options.Builder builder);
 }

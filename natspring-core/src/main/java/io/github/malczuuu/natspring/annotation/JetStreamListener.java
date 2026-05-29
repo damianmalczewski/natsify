@@ -37,7 +37,6 @@ public @interface JetStreamListener {
    * NATS subject to subscribe to. Supports property placeholders (e.g., {@code ${my.subject}}).
    *
    * @return the subject
-   * @since 0.1.0
    */
   String subject() default "";
 
@@ -46,7 +45,6 @@ public @interface JetStreamListener {
    * Supports property placeholders (e.g., {@code ${my.stream}}).
    *
    * @return the stream name
-   * @since 0.1.0
    */
   String stream() default "";
 
@@ -55,7 +53,6 @@ public @interface JetStreamListener {
    * Supports property placeholders (e.g., {@code ${my.durable}}).
    *
    * @return the durable consumer name
-   * @since 0.1.0
    */
   String durable() default "";
 
@@ -64,7 +61,6 @@ public @interface JetStreamListener {
    * placeholders (e.g., {@code ${my.queue}}).
    *
    * @return the queue group name
-   * @since 0.1.0
    */
   String queue() default "";
 
@@ -72,7 +68,6 @@ public @interface JetStreamListener {
    * Push or pull delivery model for this consumer.
    *
    * @return the consumer type
-   * @since 0.1.0
    */
   ConsumerType consumerType() default ConsumerType.PULL;
 
@@ -80,7 +75,6 @@ public @interface JetStreamListener {
    * How acknowledgment is handled after the method returns.
    *
    * @return the ack mode
-   * @since 0.1.0
    */
   AckMode ackMode() default AckMode.AUTO;
 
@@ -88,7 +82,6 @@ public @interface JetStreamListener {
    * Which messages to receive when the consumer is first created.
    *
    * @return the deliver policy
-   * @since 0.1.0
    */
   DeliverPolicyType deliverPolicy() default DeliverPolicyType.NEW;
 
@@ -109,7 +102,6 @@ public @interface JetStreamListener {
    * </ul>
    *
    * @return the dead-letter subject
-   * @since 0.1.0
    */
   String deadLetterSubject() default "";
 
@@ -118,7 +110,6 @@ public @interface JetStreamListener {
    * unlimited. When positive, sets the JetStream consumer {@code maxDeliver} configuration.
    *
    * @return the max delivery count
-   * @since 0.1.0
    */
   int maxDeliveries() default -1;
 }

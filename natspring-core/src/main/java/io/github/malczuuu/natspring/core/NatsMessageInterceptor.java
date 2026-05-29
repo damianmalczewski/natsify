@@ -40,7 +40,6 @@ public interface NatsMessageInterceptor extends Ordered {
    *
    * @param message the inbound message
    * @param chain the chain to continue processing
-   * @since 0.1.0
    */
   void intercept(Message message, NatsMessageInterceptorChain chain);
 

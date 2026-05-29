@@ -23,17 +23,9 @@ package io.github.malczuuu.natspring.annotation;
  */
 public enum ConsumerType {
 
-  /**
-   * Server pushes messages to a dispatcher callback.
-   *
-   * @since 0.1.0
-   */
+  /** Server pushes messages to a dispatcher callback. */
   PUSH,
 
-  /**
-   * Handler polls the server via {@code fetch()}; backed by a daemon thread per subscription.
-   *
-   * @since 0.1.0
-   */
+  /** Handler polls the server via {@code fetch()}; backed by a daemon thread per subscription. */
   PULL
 }

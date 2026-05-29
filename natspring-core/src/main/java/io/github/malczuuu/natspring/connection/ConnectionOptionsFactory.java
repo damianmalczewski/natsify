@@ -30,7 +30,6 @@ public interface ConnectionOptionsFactory {
    * Returns the NATS connection options.
    *
    * @return the {@link Options}
-   * @since 0.1.0
    */
   Options getOptions();
 }

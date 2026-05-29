@@ -61,7 +61,6 @@ public class JetStreamMessageListenerContainer implements MessageListenerContain
    * @param pullFetchBatchSize number of messages to fetch per poll cycle for pull consumers
    * @param pullFetchTimeout maximum time to wait for messages in each fetch call for pull consumers
    * @param interceptors interceptors applied before each listener method invocation
-   * @since 0.1.0
    */
   public JetStreamMessageListenerContainer(
       JetStreamListenerEndpointRegistry registry,
@@ -85,7 +84,6 @@ public class JetStreamMessageListenerContainer implements MessageListenerContain
    *
    * @param connection the active NATS connection
    * @throws Exception if any handler fails to start
-   * @since 0.1.0
    */
   @Override
   public synchronized void start(Connection connection) throws Exception {
@@ -107,11 +105,7 @@ public class JetStreamMessageListenerContainer implements MessageListenerContain
     }
   }
 
-  /**
-   * Stops all active handlers. Attempts to stop every handler before propagating failures.
-   *
-   * @since 0.1.0
-   */
+  /** Stops all active handlers. Attempts to stop every handler before propagating failures. */
   @Override
   public synchronized void stop() {
     List<RuntimeException> failures = new ArrayList<>();

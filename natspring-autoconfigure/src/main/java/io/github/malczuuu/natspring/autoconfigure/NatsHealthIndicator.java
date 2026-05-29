@@ -37,7 +37,6 @@ public class NatsHealthIndicator implements HealthIndicator {
    * Creates a new {@link NatsHealthIndicator}.
    *
    * @param connectionManager the connection manager used to obtain the active NATS connection
-   * @since 0.1.0
    */
   public NatsHealthIndicator(ConnectionManager connectionManager) {
     this.connectionManager = connectionManager;
@@ -47,7 +46,6 @@ public class NatsHealthIndicator implements HealthIndicator {
    * Return an indication of health of NATS connection.
    *
    * @return the health of NATS connection
-   * @since 0.1.0
    */
   @Override
   public Health health() {

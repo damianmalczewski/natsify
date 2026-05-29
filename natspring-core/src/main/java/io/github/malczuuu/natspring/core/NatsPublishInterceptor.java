@@ -38,7 +38,6 @@ public interface NatsPublishInterceptor extends Ordered {
    *
    * @param message the outbound message, fully built with subject, headers, and serialized body
    * @param chain the chain to continue publishing
-   * @since 0.1.0
    */
   void intercept(Message message, NatsPublishInterceptorChain chain);
 

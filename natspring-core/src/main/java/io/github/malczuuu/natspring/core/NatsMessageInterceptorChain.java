@@ -31,7 +31,6 @@ public interface NatsMessageInterceptorChain {
    * remain. The message may be replaced with a modified instance.
    *
    * @param message the message to forward
-   * @since 0.1.0
    */
   void proceed(Message message);
 }

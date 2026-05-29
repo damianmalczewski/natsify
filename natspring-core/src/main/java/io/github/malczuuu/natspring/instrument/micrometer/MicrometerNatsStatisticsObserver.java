@@ -41,7 +41,6 @@ public class MicrometerNatsStatisticsObserver implements MeterBinder {
    * connectionManager}.
    *
    * @param connectionManager provides access to the live NATS connection and its statistics
-   * @since 0.1.0
    */
   public MicrometerNatsStatisticsObserver(ConnectionManager connectionManager) {
     this.connectionManager = connectionManager;
@@ -52,7 +51,6 @@ public class MicrometerNatsStatisticsObserver implements MeterBinder {
    * come from Javadocs of respective getters.
    *
    * @param registry the application-wide MeterRegistry to bind to
-   * @since 0.1.0
    */
   @Override
   public void bindTo(MeterRegistry registry) {

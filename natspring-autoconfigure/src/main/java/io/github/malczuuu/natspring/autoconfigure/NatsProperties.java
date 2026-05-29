@@ -104,7 +104,6 @@ public class NatsProperties {
    * Returns whether NATS auto-configuration is enabled.
    *
    * @return whether NATS auto-configuration is enabled
-   * @since 0.1.0
    */
   public boolean isEnabled() {
     return enabled;
@@ -114,7 +113,6 @@ public class NatsProperties {
    * Sets whether NATS auto-configuration is enabled.
    *
    * @param enabled whether auto-configuration is enabled
-   * @since 0.1.0
    */
   public void setEnabled(boolean enabled) {
     this.enabled = enabled;
@@ -124,7 +122,6 @@ public class NatsProperties {
    * Returns the NATS server URL.
    *
    * @return the NATS server URL
-   * @since 0.1.0
    */
   public String getServer() {
     return server;
@@ -134,7 +131,6 @@ public class NatsProperties {
    * Sets the NATS server URL.
    *
    * @param server the NATS server URL
-   * @since 0.1.0
    */
   public void setServer(String server) {
     this.server = server;
@@ -144,7 +140,6 @@ public class NatsProperties {
    * Returns the username for authentication, or {@code null}.
    *
    * @return the username for authentication, or {@code null}
-   * @since 0.1.0
    */
   public @Nullable String getUsername() {
     return username;
@@ -154,7 +149,6 @@ public class NatsProperties {
    * Sets the username for authentication.
    *
    * @param username the username, or {@code null} to disable
-   * @since 0.1.0
    */
   public void setUsername(@Nullable String username) {
     this.username = username;
@@ -164,7 +158,6 @@ public class NatsProperties {
    * Returns the password for authentication, or {@code null}.
    *
    * @return the password for authentication, or {@code null}
-   * @since 0.1.0
    */
   public @Nullable String getPassword() {
     return password;
@@ -174,7 +167,6 @@ public class NatsProperties {
    * Sets the password for authentication.
    *
    * @param password the password, or {@code null} to disable
-   * @since 0.1.0
    */
   public void setPassword(@Nullable String password) {
     this.password = password;
@@ -184,7 +176,6 @@ public class NatsProperties {
    * Returns the name of the connection, or {@code null} if not specified. Used in thread name.
    *
    * @return the name of the connection, or {@code null}
-   * @since 0.1.0
    */
   public @Nullable String getConnectionName() {
     return connectionName;
@@ -194,7 +185,6 @@ public class NatsProperties {
    * Sets the name of the NATS connection.
    *
    * @param connectionName the connection name, or {@code null} for no name
-   * @since 0.1.0
    */
   public void setConnectionName(@Nullable String connectionName) {
     this.connectionName = connectionName;
@@ -204,7 +194,6 @@ public class NatsProperties {
    * Returns the maximum time to wait when establishing a connection.
    *
    * @return the connection timeout
-   * @since 0.1.0
    */
   public Duration getConnectionTimeout() {
     return connectionTimeout;
@@ -214,7 +203,6 @@ public class NatsProperties {
    * Sets the maximum time to wait when establishing a connection.
    *
    * @param connectionTimeout the connection timeout
-   * @since 0.1.0
    */
   public void setConnectionTimeout(Duration connectionTimeout) {
     this.connectionTimeout = connectionTimeout;
@@ -224,7 +212,6 @@ public class NatsProperties {
    * Returns the maximum time to wait for a socket write to complete.
    *
    * @return the socket write timeout
-   * @since 0.1.0
    */
   public Duration getSocketWriteTimeout() {
     return socketWriteTimeout;
@@ -234,7 +221,6 @@ public class NatsProperties {
    * Sets the maximum time to wait for a socket write to complete.
    *
    * @param socketWriteTimeout the socket write timeout
-   * @since 0.1.0
    */
   public void setSocketWriteTimeout(Duration socketWriteTimeout) {
     this.socketWriteTimeout = socketWriteTimeout;
@@ -244,7 +230,6 @@ public class NatsProperties {
    * Returns the maximum number of reconnect attempts. {@code -1} means unlimited.
    *
    * @return the maximum reconnect count
-   * @since 0.1.0
    */
   public int getMaxReconnects() {
     return maxReconnects;
@@ -254,7 +239,6 @@ public class NatsProperties {
    * Sets the maximum number of reconnect attempts. Use {@code -1} for unlimited.
    *
    * @param maxReconnects the maximum reconnect count
-   * @since 0.1.0
    */
   public void setMaxReconnects(int maxReconnects) {
     this.maxReconnects = maxReconnects;
@@ -264,7 +248,6 @@ public class NatsProperties {
    * Returns the time to wait between reconnect attempts.
    *
    * @return the reconnect wait duration
-   * @since 0.1.0
    */
   public Duration getReconnectWait() {
     return reconnectWait;
@@ -274,7 +257,6 @@ public class NatsProperties {
    * Sets the time to wait between reconnect attempts.
    *
    * @param reconnectWait the reconnect wait duration
-   * @since 0.1.0
    */
   public void setReconnectWait(Duration reconnectWait) {
     this.reconnectWait = reconnectWait;
@@ -284,7 +266,6 @@ public class NatsProperties {
    * Returns the random jitter added to reconnect wait for non-TLS connections.
    *
    * @return the reconnect jitter
-   * @since 0.1.0
    */
   public Duration getReconnectJitter() {
     return reconnectJitter;
@@ -294,7 +275,6 @@ public class NatsProperties {
    * Sets the random jitter added to reconnect wait for non-TLS connections.
    *
    * @param reconnectJitter the reconnect jitter
-   * @since 0.1.0
    */
   public void setReconnectJitter(Duration reconnectJitter) {
     this.reconnectJitter = reconnectJitter;
@@ -304,7 +284,6 @@ public class NatsProperties {
    * Returns the random jitter added to reconnect wait for TLS connections.
    *
    * @return the TLS reconnect jitter
-   * @since 0.1.0
    */
   public Duration getReconnectJitterTls() {
     return reconnectJitterTls;
@@ -314,7 +293,6 @@ public class NatsProperties {
    * Sets the random jitter added to reconnect wait for TLS connections.
    *
    * @param reconnectJitterTls the TLS reconnect jitter
-   * @since 0.1.0
    */
   public void setReconnectJitterTls(Duration reconnectJitterTls) {
     this.reconnectJitterTls = reconnectJitterTls;
@@ -324,7 +302,6 @@ public class NatsProperties {
    * Returns the size in bytes of the buffer used to hold messages during reconnect.
    *
    * @return the reconnect buffer size
-   * @since 0.1.0
    */
   public long getReconnectBufferSize() {
     return reconnectBufferSize;
@@ -334,7 +311,6 @@ public class NatsProperties {
    * Sets the size in bytes of the buffer used to hold published messages while reconnecting.
    *
    * @param reconnectBufferSize the reconnect buffer size in bytes
-   * @since 0.1.0
    */
   public void setReconnectBufferSize(long reconnectBufferSize) {
     this.reconnectBufferSize = reconnectBufferSize;
@@ -344,7 +320,6 @@ public class NatsProperties {
    * Returns the interval between client-side pings to the server.
    *
    * @return the ping interval
-   * @since 0.1.0
    */
   public Duration getPingInterval() {
     return pingInterval;
@@ -354,7 +329,6 @@ public class NatsProperties {
    * Sets the interval between client-side pings to the server.
    *
    * @param pingInterval the ping interval
-   * @since 0.1.0
    */
   public void setPingInterval(Duration pingInterval) {
     this.pingInterval = pingInterval;
@@ -364,7 +338,6 @@ public class NatsProperties {
    * Returns the maximum number of outstanding pings before the connection is considered stale.
    *
    * @return the maximum pings out
-   * @since 0.1.0
    */
   public int getMaxPingsOut() {
     return maxPingsOut;
@@ -374,7 +347,6 @@ public class NatsProperties {
    * Sets the maximum number of outstanding pings before the connection is considered stale.
    *
    * @param maxPingsOut the maximum pings out
-   * @since 0.1.0
    */
   public void setMaxPingsOut(int maxPingsOut) {
     this.maxPingsOut = maxPingsOut;
@@ -384,7 +356,6 @@ public class NatsProperties {
    * Returns the interval for scanning timed-out pending requests.
    *
    * @return the request cleanup interval
-   * @since 0.1.0
    */
   public Duration getRequestCleanupInterval() {
     return requestCleanupInterval;
@@ -394,7 +365,6 @@ public class NatsProperties {
    * Sets the interval at which the client scans for timed-out pending requests.
    *
    * @param requestCleanupInterval the request cleanup interval
-   * @since 0.1.0
    */
   public void setRequestCleanupInterval(Duration requestCleanupInterval) {
     this.requestCleanupInterval = requestCleanupInterval;
@@ -405,7 +375,6 @@ public class NatsProperties {
    * ({@code _INBOX.}).
    *
    * @return the inbox prefix, or {@code null}
-   * @since 0.1.0
    */
   public @Nullable String getInboxPrefix() {
     return inboxPrefix;
@@ -415,7 +384,6 @@ public class NatsProperties {
    * Sets the prefix for auto-generated inbox subjects. Must end with {@code .}.
    *
    * @param inboxPrefix the inbox prefix, or {@code null} to use the client default
-   * @since 0.1.0
    */
   public void setInboxPrefix(@Nullable String inboxPrefix) {
     this.inboxPrefix = inboxPrefix;
@@ -425,7 +393,6 @@ public class NatsProperties {
    * Returns whether the server should suppress echoing published messages back to this connection.
    *
    * @return whether no-echo is enabled
-   * @since 0.1.0
    */
   public boolean isNoEcho() {
     return noEcho;
@@ -435,7 +402,6 @@ public class NatsProperties {
    * Sets whether the server should suppress echoing messages back to this connection.
    *
    * @param noEcho whether to enable no-echo
-   * @since 0.1.0
    */
   public void setNoEcho(boolean noEcho) {
     this.noEcho = noEcho;
@@ -445,7 +411,6 @@ public class NatsProperties {
    * Returns whether server list randomization is disabled.
    *
    * @return whether no-randomize is enabled
-   * @since 0.1.0
    */
   public boolean isNoRandomize() {
     return noRandomize;
@@ -455,7 +420,6 @@ public class NatsProperties {
    * Sets whether to disable server list randomization on connect and reconnect.
    *
    * @param noRandomize whether to disable randomization
-   * @since 0.1.0
    */
   public void setNoRandomize(boolean noRandomize) {
     this.noRandomize = noRandomize;
@@ -465,7 +429,6 @@ public class NatsProperties {
    * Returns whether JetStream stream auto-creation is enabled.
    *
    * @return whether JetStream stream auto-creation is enabled
-   * @since 0.1.0
    */
   public boolean isAutoStreamCreation() {
     return autoStreamCreation;
@@ -476,7 +439,6 @@ public class NatsProperties {
    * streams on startup.
    *
    * @param autoStreamCreation whether to enable auto stream creation
-   * @since 0.1.0
    */
   public void setAutoStreamCreation(boolean autoStreamCreation) {
     this.autoStreamCreation = autoStreamCreation;
@@ -486,7 +448,6 @@ public class NatsProperties {
    * Returns the number of messages to fetch per poll cycle for JetStream pull consumers.
    *
    * @return the pull fetch batch size
-   * @since 0.1.0
    */
   public int getPullFetchBatchSize() {
     return pullFetchBatchSize;
@@ -496,7 +457,6 @@ public class NatsProperties {
    * Sets the number of messages to fetch per poll cycle for JetStream pull consumers.
    *
    * @param pullFetchBatchSize the pull fetch batch size
-   * @since 0.1.0
    */
   public void setPullFetchBatchSize(int pullFetchBatchSize) {
     this.pullFetchBatchSize = pullFetchBatchSize;
@@ -506,7 +466,6 @@ public class NatsProperties {
    * Returns the maximum time to wait for messages in each fetch call for JetStream pull consumers.
    *
    * @return the pull fetch timeout
-   * @since 0.1.0
    */
   public Duration getPullFetchTimeout() {
     return pullFetchTimeout;
@@ -516,7 +475,6 @@ public class NatsProperties {
    * Sets the maximum time to wait for messages in each fetch call for JetStream pull consumers.
    *
    * @param pullFetchTimeout the pull fetch timeout
-   * @since 0.1.0
    */
   public void setPullFetchTimeout(Duration pullFetchTimeout) {
     this.pullFetchTimeout = pullFetchTimeout;

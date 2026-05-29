@@ -41,8 +41,6 @@ public class MicrometerNatsListenerObserver implements NatsListenerObserver, Met
   /**
    * Creates an instance using a temporary {@link SimpleMeterRegistry} until {@link #bindTo} is
    * called.
-   *
-   * @since 0.1.0
    */
   public MicrometerNatsListenerObserver() {
     meterRegistry = new SimpleMeterRegistry();
@@ -53,7 +51,6 @@ public class MicrometerNatsListenerObserver implements NatsListenerObserver, Met
    *
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
-   * @since 0.1.0
    */
   @Override
   public void onReceived(String subject, String queue) {
@@ -66,7 +63,6 @@ public class MicrometerNatsListenerObserver implements NatsListenerObserver, Met
    *
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
-   * @since 0.1.0
    */
   @Override
   public void onSucceeded(String subject, String queue) {
@@ -79,7 +75,6 @@ public class MicrometerNatsListenerObserver implements NatsListenerObserver, Met
    *
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
-   * @since 0.1.0
    */
   @Override
   public void onFailed(String subject, String queue) {
@@ -92,7 +87,6 @@ public class MicrometerNatsListenerObserver implements NatsListenerObserver, Met
    *
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
-   * @since 0.1.0
    */
   @Override
   public void onDeadLettered(String subject, String queue) {
@@ -105,7 +99,6 @@ public class MicrometerNatsListenerObserver implements NatsListenerObserver, Met
    *
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
-   * @since 0.1.0
    */
   @Override
   public void onReplyDiscarded(String subject, String queue) {
@@ -118,7 +111,6 @@ public class MicrometerNatsListenerObserver implements NatsListenerObserver, Met
    *
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
-   * @since 0.1.0
    */
   @Override
   public void onReplyFailed(String subject, String queue) {
@@ -132,7 +124,6 @@ public class MicrometerNatsListenerObserver implements NatsListenerObserver, Met
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
    * @param durationNanos elapsed time in nanoseconds from message receipt to handler completion
-   * @since 0.1.0
    */
   @Override
   public void onProcessed(String subject, String queue, long durationNanos) {
@@ -146,7 +137,6 @@ public class MicrometerNatsListenerObserver implements NatsListenerObserver, Met
    * Replaces the temporary registry with the application-wide {@code registry}.
    *
    * @param registry the application-wide MeterRegistry to bind to
-   * @since 0.1.0
    */
   @Override
   public void bindTo(MeterRegistry registry) {

@@ -23,24 +23,12 @@ package io.github.malczuuu.natspring.annotation;
  */
 public enum DeliverPolicyType {
 
-  /**
-   * All messages retained in the stream are delivered.
-   *
-   * @since 0.1.0
-   */
+  /** All messages retained in the stream are delivered. */
   ALL,
 
-  /**
-   * Only messages published after consumer creation are delivered.
-   *
-   * @since 0.1.0
-   */
+  /** Only messages published after consumer creation are delivered. */
   NEW,
 
-  /**
-   * Only the most recent message at consumer creation time is delivered.
-   *
-   * @since 0.1.0
-   */
+  /** Only the most recent message at consumer creation time is delivered. */
   LAST
 }

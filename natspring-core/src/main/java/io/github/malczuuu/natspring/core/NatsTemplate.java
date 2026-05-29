@@ -30,8 +30,7 @@ import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Default {@link NatsOperations} implementation backed by a {@link
- * io.github.malczuuu.natspring.connection.ConnectionManager}.
+ * Default {@link NatsOperations} implementation backed by a {@link ConnectionSupplier}.
  *
  * @since 0.1.0
  */
@@ -54,7 +53,6 @@ public class NatsTemplate implements NatsOperations {
    * Returns a builder for {@link NatsTemplate}.
    *
    * @return a new {@link NatsTemplate.Builder}
-   * @since 0.1.0
    */
   public static Builder builder() {
     return new Builder();
@@ -64,7 +62,6 @@ public class NatsTemplate implements NatsOperations {
    * Publishes a pre-built {@link Message} as-is.
    *
    * @param message the message to publish
-   * @since 0.1.0
    */
   @Override
   public void publish(Message message) {
@@ -76,7 +73,6 @@ public class NatsTemplate implements NatsOperations {
    *
    * @param subject the NATS subject
    * @param body the message body
-   * @since 0.1.0
    */
   @Override
   public void publish(String subject, byte[] body) {
@@ -88,7 +84,6 @@ public class NatsTemplate implements NatsOperations {
    *
    * @param subject the NATS subject
    * @param bodyAsString the message body
-   * @since 0.1.0
    */
   @Override
   public void publish(String subject, String bodyAsString) {
@@ -105,7 +100,6 @@ public class NatsTemplate implements NatsOperations {
    * @param subject the NATS subject
    * @param bodyAsObject the object to serialize and publish
    * @param <T> the object type
-   * @since 0.1.0
    */
   @Override
   public <T> void publish(String subject, T bodyAsObject) {
@@ -122,7 +116,6 @@ public class NatsTemplate implements NatsOperations {
    * @param subject the NATS subject
    * @param headers the message headers
    * @param body the message body
-   * @since 0.1.0
    */
   @Override
   public void publish(String subject, Headers headers, byte[] body) {
@@ -135,7 +128,6 @@ public class NatsTemplate implements NatsOperations {
    * @param subject the NATS subject
    * @param headers the message headers
    * @param bodyAsString the message body
-   * @since 0.1.0
    */
   @Override
   public void publish(String subject, Headers headers, String bodyAsString) {
@@ -154,7 +146,6 @@ public class NatsTemplate implements NatsOperations {
    * @param headers the message headers
    * @param bodyAsObject the object to serialize and publish
    * @param <T> the object type
-   * @since 0.1.0
    */
   @Override
   public <T> void publish(String subject, Headers headers, T bodyAsObject) {
@@ -180,7 +171,6 @@ public class NatsTemplate implements NatsOperations {
    * @param payload the request body
    * @param timeout how long to wait for a reply
    * @return future that completes with the reply message
-   * @since 0.1.0
    */
   @Override
   public CompletableFuture<NatsReply> request(String subject, byte[] payload, Duration timeout) {
@@ -197,7 +187,6 @@ public class NatsTemplate implements NatsOperations {
    * @param payload the request body, encoded as UTF-8
    * @param timeout how long to wait for a reply
    * @return future that completes with the reply message
-   * @since 0.1.0
    */
   @Override
   public CompletableFuture<NatsReply> request(String subject, String payload, Duration timeout) {
@@ -220,7 +209,6 @@ public class NatsTemplate implements NatsOperations {
    * @param timeout how long to wait for a reply
    * @param <T> the payload object type
    * @return future that completes with the reply message
-   * @since 0.1.0
    */
   @Override
   public <T> CompletableFuture<NatsReply> request(String subject, T payload, Duration timeout) {
@@ -240,11 +228,7 @@ public class NatsTemplate implements NatsOperations {
             new IllegalStateException("request suppressed by interceptor"));
   }
 
-  /**
-   * Builder for {@link NatsTemplate}.
-   *
-   * @since 0.1.0
-   */
+  /** Builder for {@link NatsTemplate}. */
   public static final class Builder {
 
     private @Nullable ConnectionSupplier connectionSupplier;
@@ -258,7 +242,6 @@ public class NatsTemplate implements NatsOperations {
      *
      * @param connectionSupplier the connection supplier; must not be {@code null}
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withConnectionSupplier(ConnectionSupplier connectionSupplier) {
       this.connectionSupplier = connectionSupplier;
@@ -271,7 +254,6 @@ public class NatsTemplate implements NatsOperations {
      *
      * @param jsonMapper the JSON mapper
      * @return this builder
-     * @since 0.1.0
      */
     public Builder withJsonMapper(JsonMapper jsonMapper) {
       this.jsonMapper = jsonMapper;
@@ -283,7 +265,6 @@ public class NatsTemplate implements NatsOperations {
      *
      * @param interceptors interceptors to add
      * @return this builder
-     * @since 0.1.0
      */
     public Builder addInterceptors(List<NatsPublishInterceptor> interceptors) {
       this.interceptors.addAll(interceptors);
@@ -295,7 +276,6 @@ public class NatsTemplate implements NatsOperations {
      *
      * @param interceptor the interceptor to add
      * @return this builder
-     * @since 0.1.0
      */
     public Builder addInterceptor(NatsPublishInterceptor interceptor) {
       this.interceptors.add(interceptor);
@@ -308,7 +288,6 @@ public class NatsTemplate implements NatsOperations {
      *
      * @return a new {@link NatsTemplate}
      * @throws IllegalArgumentException if {@code connectionSupplier} has not been set
-     * @since 0.1.0
      */
     public NatsTemplate build() {
       if (connectionSupplier == null) {

@@ -34,7 +34,6 @@ public interface MessageArgumentResolver {
    * @param parameters the method parameters to resolve
    * @param message the received message
    * @return array of resolved arguments, or {@code null}
-   * @since 0.1.0
    */
   Object @Nullable [] resolveArguments(Parameter[] parameters, Message message);
 
@@ -44,7 +43,6 @@ public interface MessageArgumentResolver {
    * @param parameter the method parameter to resolve
    * @param message the received message
    * @return the resolved argument, or {@code null}
-   * @since 0.1.0
    */
   @Nullable Object resolveArgument(Parameter parameter, Message message);
 
@@ -56,7 +54,6 @@ public interface MessageArgumentResolver {
    * @param result the non-null return value from the listener method
    * @param replyTo the NATS subject to address the reply to
    * @return the reply message ready to publish
-   * @since 0.1.0
    */
   Message buildReplyMessage(Object result, String replyTo);
 }

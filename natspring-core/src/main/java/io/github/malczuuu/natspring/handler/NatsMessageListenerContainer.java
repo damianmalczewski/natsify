@@ -48,7 +48,6 @@ public class NatsMessageListenerContainer implements MessageListenerContainer {
    * @param argumentResolver resolver used to map message data to handler method arguments
    * @param observer observer notified on listener invocations
    * @param interceptors interceptors applied before each listener method invocation
-   * @since 0.1.0
    */
   public NatsMessageListenerContainer(
       NatsListenerEndpointRegistry registry,
@@ -67,7 +66,6 @@ public class NatsMessageListenerContainer implements MessageListenerContainer {
    *
    * @param connection the active NATS connection
    * @throws Exception if any handler fails to start
-   * @since 0.1.0
    */
   @Override
   public synchronized void start(Connection connection) throws Exception {
@@ -84,11 +82,7 @@ public class NatsMessageListenerContainer implements MessageListenerContainer {
     }
   }
 
-  /**
-   * Stops all active handlers. Attempts to stop every handler before propagating failures.
-   *
-   * @since 0.1.0
-   */
+  /** Stops all active handlers. Attempts to stop every handler before propagating failures. */
   @Override
   public synchronized void stop() {
     List<RuntimeException> failures = new ArrayList<>();

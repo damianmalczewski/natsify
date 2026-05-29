@@ -32,7 +32,6 @@ public interface NatsOperations {
    * Publishes a pre-built {@link Message} as-is.
    *
    * @param message the message to publish
-   * @since 0.1.0
    */
   void publish(Message message);
 
@@ -41,7 +40,6 @@ public interface NatsOperations {
    *
    * @param subject the NATS subject
    * @param body the message body
-   * @since 0.1.0
    */
   void publish(String subject, byte[] body);
 
@@ -50,7 +48,6 @@ public interface NatsOperations {
    *
    * @param subject the NATS subject
    * @param bodyAsString the message body
-   * @since 0.1.0
    */
   void publish(String subject, String bodyAsString);
 
@@ -60,7 +57,6 @@ public interface NatsOperations {
    * @param subject the NATS subject
    * @param bodyAsObject the object to serialize and publish
    * @param <T> the object type
-   * @since 0.1.0
    */
   <T> void publish(String subject, T bodyAsObject);
 
@@ -70,7 +66,6 @@ public interface NatsOperations {
    * @param subject the NATS subject
    * @param headers the message headers
    * @param body the message body
-   * @since 0.1.0
    */
   void publish(String subject, Headers headers, byte[] body);
 
@@ -80,7 +75,6 @@ public interface NatsOperations {
    * @param subject the NATS subject
    * @param headers the message headers
    * @param bodyAsString the message body
-   * @since 0.1.0
    */
   void publish(String subject, Headers headers, String bodyAsString);
 
@@ -91,7 +85,6 @@ public interface NatsOperations {
    * @param headers the message headers
    * @param bodyAsObject the object to serialize and publish
    * @param <T> the object type
-   * @since 0.1.0
    */
   <T> void publish(String subject, Headers headers, T bodyAsObject);
 

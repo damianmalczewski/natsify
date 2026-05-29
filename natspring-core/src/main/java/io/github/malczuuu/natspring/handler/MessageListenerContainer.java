@@ -30,14 +30,9 @@ public interface MessageListenerContainer {
    *
    * @param connection the active NATS connection
    * @throws Exception if any handler fails to start
-   * @since 0.1.0
    */
   void start(Connection connection) throws Exception;
 
-  /**
-   * Stops all active handlers.
-   *
-   * @since 0.1.0
-   */
+  /** Stops all active handlers. */
   void stop();
 }

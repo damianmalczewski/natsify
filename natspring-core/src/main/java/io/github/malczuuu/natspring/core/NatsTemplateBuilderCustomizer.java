@@ -31,7 +31,6 @@ public interface NatsTemplateBuilderCustomizer {
    *
    * @param builder the builder to customize
    * @return the customized builder
-   * @since 0.1.0
    */
   NatsTemplate.Builder customize(NatsTemplate.Builder builder);
 }

@@ -26,16 +26,12 @@ public enum AckMode {
   /**
    * Framework acknowledges the message on successful handler return and negatively acknowledges
    * (naks) on handler exception.
-   *
-   * @since 0.1.0
    */
   AUTO,
 
   /**
    * Handler is responsible for calling {@code msg.ack()} or {@code msg.nak()} itself; the framework
    * does nothing after the method returns.
-   *
-   * @since 0.1.0
    */
   MANUAL
 }

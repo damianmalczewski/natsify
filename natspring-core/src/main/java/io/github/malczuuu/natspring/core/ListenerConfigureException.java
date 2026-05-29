@@ -27,11 +27,7 @@ public class ListenerConfigureException extends NatsIntegrationException {
 
   @Serial private static final long serialVersionUID = 1L;
 
-  /**
-   * Creates a new {@link ListenerConfigureException}.
-   *
-   * @since 0.1.0
-   */
+  /** Creates a new {@link ListenerConfigureException}. */
   public ListenerConfigureException() {
     super();
   }
@@ -40,7 +36,6 @@ public class ListenerConfigureException extends NatsIntegrationException {
    * Creates a new {@link ListenerConfigureException}.
    *
    * @param message the detail message
-   * @since 0.1.0
    */
   public ListenerConfigureException(String message) {
     super(message);
@@ -51,7 +46,6 @@ public class ListenerConfigureException extends NatsIntegrationException {
    *
    * @param message the detail message
    * @param cause the underlying cause
-   * @since 0.1.0
    */
   public ListenerConfigureException(String message, Throwable cause) {
     super(message, cause);
@@ -61,7 +55,6 @@ public class ListenerConfigureException extends NatsIntegrationException {
    * Creates a new {@link ListenerConfigureException}.
    *
    * @param cause the underlying cause
-   * @since 0.1.0
    */
   public ListenerConfigureException(Throwable cause) {
     super(cause);
@@ -74,7 +67,6 @@ public class ListenerConfigureException extends NatsIntegrationException {
    * @param cause the underlying cause
    * @param enableSuppression whether suppression is enabled or disabled
    * @param writableStackTrace whether the stack trace should be writable
-   * @since 0.1.0
    */
   protected ListenerConfigureException(
       String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {

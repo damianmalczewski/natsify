@@ -27,7 +27,6 @@ public interface NatsListenerObserver {
    * Returns a no-op implementation that discards all events.
    *
    * @return a no-op {@link NatsListenerObserver}
-   * @since 0.1.0
    */
   static NatsListenerObserver noop() {
     return new NatsListenerObserver() {};
@@ -38,7 +37,6 @@ public interface NatsListenerObserver {
    *
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
-   * @since 0.1.0
    */
   default void onReceived(String subject, String queue) {}
 
@@ -47,7 +45,6 @@ public interface NatsListenerObserver {
    *
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
-   * @since 0.1.0
    */
   default void onSucceeded(String subject, String queue) {}
 
@@ -56,7 +53,6 @@ public interface NatsListenerObserver {
    *
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
-   * @since 0.1.0
    */
   default void onFailed(String subject, String queue) {}
 
@@ -65,7 +61,6 @@ public interface NatsListenerObserver {
    *
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
-   * @since 0.1.0
    */
   default void onDeadLettered(String subject, String queue) {}
 
@@ -75,7 +70,6 @@ public interface NatsListenerObserver {
    *
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
-   * @since 0.1.0
    */
   default void onReplyDiscarded(String subject, String queue) {}
 
@@ -84,7 +78,6 @@ public interface NatsListenerObserver {
    *
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
-   * @since 0.1.0
    */
   default void onReplyFailed(String subject, String queue) {}
 
@@ -94,7 +87,6 @@ public interface NatsListenerObserver {
    * @param subject the NATS subject
    * @param queue the queue group name, or empty string if not in a queue group
    * @param durationNanos elapsed time in nanoseconds from message receipt to handler completion
-   * @since 0.1.0
    */
   default void onProcessed(String subject, String queue, long durationNanos) {}
 }

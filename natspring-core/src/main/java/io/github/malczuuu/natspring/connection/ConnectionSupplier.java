@@ -30,7 +30,6 @@ public interface ConnectionSupplier {
    * Returns the active NATS connection, establishing one if not yet connected.
    *
    * @return the active {@link Connection}
-   * @since 0.1.0
    */
   Connection getConnection();
 }

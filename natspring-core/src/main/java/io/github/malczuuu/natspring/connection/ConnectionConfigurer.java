@@ -62,7 +62,6 @@ public final class ConnectionConfigurer
    * @param options NATS connection options
    * @param containers listener containers responsible for setting up annotation-based listeners
    * @param connectionObserver observer for connection lifecycle events
-   * @since 0.1.0
    */
   public ConnectionConfigurer(
       Options options,
@@ -77,7 +76,6 @@ public final class ConnectionConfigurer
    * Returns the active NATS connection, establishing one if not yet connected.
    *
    * @return the active {@link Connection}
-   * @since 0.1.0
    */
   @Override
   public Connection getConnection() {
@@ -91,11 +89,7 @@ public final class ConnectionConfigurer
     return Objects.requireNonNull(connection);
   }
 
-  /**
-   * Establishes the NATS connection and starts all registered listener containers.
-   *
-   * @since 0.1.0
-   */
+  /** Establishes the NATS connection and starts all registered listener containers. */
   @Override
   public synchronized void start() {
     Connection connection = doConnect();
@@ -126,11 +120,7 @@ public final class ConnectionConfigurer
     running = true;
   }
 
-  /**
-   * Stops all listener containers in reverse registration order and closes the NATS connection.
-   *
-   * @since 0.1.0
-   */
+  /** Stops all listener containers in reverse registration order and closes the NATS connection. */
   @Override
   public synchronized void stop() {
     running = false;
@@ -160,7 +150,6 @@ public final class ConnectionConfigurer
    * #getConnection()}, but this method reflects only the managed lifecycle state.
    *
    * @return {@code true} if running
-   * @since 0.1.0
    */
   @Override
   public boolean isRunning() {
@@ -175,7 +164,6 @@ public final class ConnectionConfigurer
    * @param conn the connection associated with the error
    * @param type the type of event that has occurred
    * @deprecated use {@link #connectionEvent(Connection, Events, Long, String)} instead
-   * @since 0.1.0
    */
   @Override
   @Deprecated
@@ -188,7 +176,6 @@ public final class ConnectionConfigurer
    * @param type the type of event
    * @param time the time of the event in milliseconds
    * @param uriDetails URI details of the connection
-   * @since 0.1.0
    */
   @Override
   public void connectionEvent(Connection conn, Events type, Long time, String uriDetails) {
@@ -201,7 +188,6 @@ public final class ConnectionConfigurer
    *
    * @param conn the connection on which the error occurred
    * @param error the error description
-   * @since 0.1.0
    */
   @Override
   public void errorOccurred(Connection conn, String error) {
@@ -215,7 +201,6 @@ public final class ConnectionConfigurer
    *
    * @param conn the connection on which the exception occurred
    * @param exp the exception
-   * @since 0.1.0
    */
   @Override
   public void exceptionOccurred(Connection conn, Exception exp) {
@@ -228,7 +213,6 @@ public final class ConnectionConfigurer
    *
    * @param conn the connection that detected the slow consumer
    * @param consumer the slow consumer
-   * @since 0.1.0
    */
   @Override
   public void slowConsumerDetected(Connection conn, Consumer consumer) {
@@ -241,7 +225,6 @@ public final class ConnectionConfigurer
    *
    * @param conn the connection that discarded the message
    * @param message the discarded message
-   * @since 0.1.0
    */
   @Override
   public void messageDiscarded(Connection conn, Message message) {
