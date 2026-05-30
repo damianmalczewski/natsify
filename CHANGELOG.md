@@ -9,13 +9,17 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 ### Added
 
 - Add support for managing NATS connection lifecycle.
+- Add support for JetStream stream creation on application startup.
 - Add `@NatsListener` and `@JetStreamListener` annotations post-processor for automatic listener registration.
-- Add `NatsOperations` for common publish operations.
+- Add dead-letter topic support for both listener types (with at-most-once QoS for `@NatsListener`).
+- Add `NatsOperations` for common publish and request/reply operations.
+- Add support for interceptors for annotation-based listeners and `NatsOperations`.
 - Add support for `micrometer-metrics` for NATS metrics.
 - Add support for `spring-boot-health` for `NatsHealthIndicator`.
 - Add Testcontainers support via [`io.github.amadeusitgroup.testcontainers:nats`][nats-testcontainers-java] library and
   `@ServiceConnection` for automatic service connection management.
 - Add Spring Boot starter modules for easy integration.
+- Add a bunch of examples to showcase the features.
 
 [nats-testcontainers-java]: https://github.com/AmadeusITGroup/nats-testcontainers-java
 
