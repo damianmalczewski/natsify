@@ -22,44 +22,49 @@ dependencies {
 
 ## Architecture
 
-The general architecture of how listener methods are registered to a NATS connections:
+Startup is driven by three `SmartLifecycle` beans started in phase order:
 
 ```txt
-                   Spring context startup
-                            │
-                            ▼
-            DefaultConnectionManager (SmartLifecycle)
-                            │ establishes
-                            ▼
-                       NATS Connection
-                  ┌─────────┴────────────────┐
-                  │                          │
-                  ▼                          ▼
-  NatsMessageListenerContainer     JetStreamMessageListenerContainer
-      reads                            reads
-  NatsListenerEndpointRegistry     JetStreamListenerEndpointRegistry
-    (populated by BPP)               (populated by BPP)
-          │                                  │
-          │                       ┌──────────┴──────────┐
-          │                       │                     │
-          ▼                       ▼                     ▼
-  SubscriptionHandler      JetStreamPushHandler  JetStreamPullHandler
-          │                       └──────────┬───────────┘
-          │                                  │
-          ▼                                  ▼
-  NatsListenerInvocation           JetStreamInvocation
-          │                                  │
-          └─────────────────┬────────────────┘
-                            │
-                            ▼
-                 MessageArgumentResolver
-                resolves method parameters
-                from NATS message payload,
-                headers, subject, metadata
-                            │
-                            ▼
-          @NatsListener / @JetStreamListener method
+  Spring context startup
+          │
+          ▼
+  ManagedConnectionLifecycle   ← phase N   (ConnectionLifecycle extends Connection)
+          │ establishes NATS connection
+          ▼
+  ManagedJetStreamLifecycle    ← phase N+50  (creates/updates JetStream streams)
+          │
+          ▼
+  ManagedListenerContainerLifecycle  ← phase N+100
+          │ starts
+          ├──────────────────────────────────────────┐
+          ▼                                          ▼
+  NatsMessageListenerContainer        JetStreamMessageListenerContainer
+      reads                               reads
+  NatsListenerEndpointRegistry        JetStreamListenerEndpointRegistry
+    (populated by BPP)                  (populated by BPP)
+          │                                          │
+          │                             ┌────────────┴────────────┐
+          │                             │                         │
+          ▼                             ▼                         ▼
+  SubscriptionHandler          JetStreamPushHandler     JetStreamPullHandler
+          │                             └────────────┬────────────┘
+          │                                          │
+          ▼                                          ▼
+  NatsListenerInvocation                 JetStreamInvocation
+          │                                          │
+          └──────────────────┬───────────────────────┘
+                             │
+                             ▼
+                  MessageArgumentResolver
+                 resolves method parameters
+                 from NATS message payload,
+                 headers, subject, metadata
+                             │
+                             ▼
+           @NatsListener / @JetStreamListener method
 ```
+
+`ManagedConnectionLifecycle` implements `Connection` directly — it is the `Connection` bean injected throughout the application. `ConnectionWatcher` implements `ConnectionListener` and `ErrorListener` to bridge raw NATS connection/error events to `NatsConnectionObserver`.
 
 Bean post-processors scan application beans at startup:
 

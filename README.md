@@ -96,7 +96,7 @@ Password for NATS authentication. Combined with `username` into `userInfo(String
 
 ### `nats.auto-stream-creation`
 
-Whether declared `StreamConfiguration` beans are used to create or update streams on startup. Default: `false`.
+Whether declared `StreamConfiguration` beans are used to create streams on startup. Default: `false`.
 
 ### `nats.pull-fetch-batch-size`
 
@@ -510,8 +510,8 @@ JSON deserialization without a separate `ObjectMapper`.
 
 ## JetStream stream auto-creation
 
-Declare `io.nats.client.api.StreamConfiguration` beans and the auto-configuration will create or update the
-corresponding streams on startup, before any listeners are registered.
+Declare `io.nats.client.api.StreamConfiguration` beans and the auto-configuration will create the
+corresponding streams on startup (if they do not already exist), before any listeners are registered.
 
 > [!IMPORTANT]
 > Works only if `nats.auto-stream-creation` is set to `true` (disabled by default).
