@@ -20,7 +20,7 @@ import io.nats.client.Message;
 import org.springframework.core.ParameterizedTypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
-class SimpleNatsReply implements NatsReply {
+final class SimpleNatsReply implements NatsReply {
 
   private final Message message;
   private final JsonMapper jsonMapper;
