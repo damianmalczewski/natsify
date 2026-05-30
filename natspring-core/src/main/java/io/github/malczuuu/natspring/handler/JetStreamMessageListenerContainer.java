@@ -78,6 +78,17 @@ public class JetStreamMessageListenerContainer implements MessageListenerContain
   }
 
   /**
+   * Checks if there are any registered handlers in this container.
+   *
+   * @return {@code true} if no handlers are registered, {@code false} otherwise
+   * @since 0.1.1
+   */
+  @Override
+  public boolean isEmpty() {
+    return registry.getEndpoints().isEmpty();
+  }
+
+  /**
    * Initializes and starts all handlers using the given NATS connection. Creates a push or pull
    * consumer handler for each registered {@link JetStreamListenerEndpoint}. Does nothing if no
    * listeners are registered.
@@ -176,9 +187,6 @@ public class JetStreamMessageListenerContainer implements MessageListenerContain
             .ackPolicy(AckPolicy.Explicit);
     if (!endpoint.getDurable().isEmpty()) {
       builder.durable(endpoint.getDurable());
-    }
-    if (endpoint.getMaxDeliveries() > 0) {
-      builder.maxDeliver(endpoint.getMaxDeliveries());
     }
     return builder.build();
   }

@@ -61,6 +61,17 @@ public class NatsMessageListenerContainer implements MessageListenerContainer {
   }
 
   /**
+   * Checks if there are any registered handlers in this container.
+   *
+   * @return {@code true} if no handlers are registered, {@code false} otherwise
+   * @since 0.1.1
+   */
+  @Override
+  public boolean isEmpty() {
+    return registry.getEndpoints().isEmpty();
+  }
+
+  /**
    * Initializes and starts all handlers using the given NATS connection. Creates a subscription
    * handler for each registered {@link NatsListenerEndpoint}.
    *

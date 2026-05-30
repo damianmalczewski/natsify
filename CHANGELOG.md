@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog][keepachangelog], and this project adhe
 
 ## [Unreleased]
 
+### Fixed
+
+- Add `isEmpty` to `MessageListenerContainer` and hide unnecessary logging.
+
 ## [0.1.0] - 2026-05-30
 
 ### Added

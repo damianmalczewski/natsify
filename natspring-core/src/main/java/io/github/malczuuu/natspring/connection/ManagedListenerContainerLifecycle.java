@@ -62,6 +62,9 @@ public class ManagedListenerContainerLifecycle implements ListenerContainerLifec
     int started = 0;
     try {
       for (MessageListenerContainer container : containers) {
+        if (container.isEmpty()) {
+          continue;
+        }
         log.info(
             "Setting up annotation-based NATS listeners for type={}",
             AopUtils.getTargetClass(container).getSimpleName());
@@ -89,6 +92,9 @@ public class ManagedListenerContainerLifecycle implements ListenerContainerLifec
   public synchronized void stop() {
     running = false;
     for (MessageListenerContainer container : containers) {
+      if (container.isEmpty()) {
+        continue;
+      }
       log.info(
           "Shutting down annotation-based NATS listeners for type={}",
           AopUtils.getTargetClass(container).getSimpleName());

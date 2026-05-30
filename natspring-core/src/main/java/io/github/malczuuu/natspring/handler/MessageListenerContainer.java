@@ -26,6 +26,14 @@ import io.nats.client.Connection;
 public interface MessageListenerContainer {
 
   /**
+   * Checks if there are any registered handlers in this container.
+   *
+   * @return {@code true} if no handlers are registered, {@code false} otherwise
+   * @since 0.1.1
+   */
+  boolean isEmpty();
+
+  /**
    * Initializes and starts all handlers using the given NATS connection.
    *
    * @param connection the active NATS connection
