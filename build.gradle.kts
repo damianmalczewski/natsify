@@ -11,6 +11,7 @@ plugins {
 
 dependencies {
     nmcpAggregation(project(":natspring-autoconfigure"))
+    nmcpAggregation(project(":natspring-bom"))
     nmcpAggregation(project(":natspring-core"))
     nmcpAggregation(project(":natspring-starter"))
     nmcpAggregation(project(":natspring-starter-test"))

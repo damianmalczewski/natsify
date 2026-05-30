@@ -12,6 +12,7 @@ plugins {
 rootProject.name = "natspring"
 
 include(":natspring-autoconfigure")
+include(":natspring-bom")
 include(":natspring-core")
 include(":natspring-integration-tests")
 include(":natspring-starter")
