@@ -67,3 +67,10 @@ jobs:
             -Dorg.gradle.parallel=false
             -Dorg.gradle.workers.max=1
         run: ./gradlew build
+
+      - name: Upload JaCoCo report to Codecov
+        if: matrix.java == 25
+        uses: codecov/codecov-action@v6
+        with:
+          files: build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml
+          token: ${{ secrets.CODECOV_TOKEN }}

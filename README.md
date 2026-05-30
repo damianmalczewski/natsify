@@ -1,6 +1,7 @@
 # Natspring Project
 
 [![Build Status](https://github.com/damianmalczewski/natspring/actions/workflows/gradle-build.yml/badge.svg)](https://github.com/damianmalczewski/natspring/actions/workflows/gradle-build.yml)
+[![Xodecov](https://codecov.io/gh/damianmalczewski/natspring/graph/badge.svg?token=6NQ031426J)](https://codecov.io/gh/damianmalczewski/natspring)
 [![Sonatype](https://img.shields.io/maven-central/v/io.github.malczuuu.natspring/natspring-starter)][maven-central]
 [![License](https://img.shields.io/github/license/damianmalczewski/natspring)](https://github.com/damianmalczewski/natspring/blob/main/LICENSE)
 
