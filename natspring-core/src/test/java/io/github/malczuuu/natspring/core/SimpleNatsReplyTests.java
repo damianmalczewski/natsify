@@ -25,7 +25,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import tools.jackson.core.type.TypeReference;
+import org.springframework.core.ParameterizedTypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
 class SimpleNatsReplyTests {
@@ -61,7 +61,7 @@ class SimpleNatsReplyTests {
     when(message.getData()).thenReturn("[\"a\",\"b\"]".getBytes(StandardCharsets.UTF_8));
     NatsReply reply = new SimpleNatsReply(message, jsonMapper);
 
-    List<String> result = reply.bodyAs(new TypeReference<>() {});
+    List<String> result = reply.bodyAs(new ParameterizedTypeReference<>() {});
 
     assertThat(result).containsExactly("a", "b");
   }

@@ -17,7 +17,7 @@
 package io.github.malczuuu.natspring.core;
 
 import io.nats.client.Message;
-import tools.jackson.core.type.TypeReference;
+import org.springframework.core.ParameterizedTypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
 class SimpleNatsReply implements NatsReply {
@@ -41,7 +41,8 @@ class SimpleNatsReply implements NatsReply {
   }
 
   @Override
-  public <T> T bodyAs(TypeReference<T> typeReference) {
-    return jsonMapper.readValue(message.getData(), typeReference);
+  public <T> T bodyAs(ParameterizedTypeReference<T> typeReference) {
+    return jsonMapper.readValue(
+        message.getData(), jsonMapper.constructType(typeReference.getType()));
   }
 }

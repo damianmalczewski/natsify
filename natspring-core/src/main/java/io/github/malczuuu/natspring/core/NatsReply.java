@@ -17,7 +17,7 @@
 package io.github.malczuuu.natspring.core;
 
 import io.nats.client.Message;
-import tools.jackson.core.type.TypeReference;
+import org.springframework.core.ParameterizedTypeReference;
 
 /**
  * Represents a reply message received via NATS request/reply.
@@ -49,5 +49,5 @@ public interface NatsReply {
    * @param <T> the target type
    * @return deserialized value
    */
-  <T> T bodyAs(TypeReference<T> typeReference);
+  <T> T bodyAs(ParameterizedTypeReference<T> typeReference);
 }
